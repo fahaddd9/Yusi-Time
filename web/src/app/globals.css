@@ -1,0 +1,151 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+  /* ── BRAND ─────────────────────────────────── */
+  --brand-navy:        #1E2D4B;   /* Logo navy — primary dark */
+  --brand-orange:      #F06900;   /* Logo orange — primary accent */
+  --brand-orange-hover:#D95E00;   /* Orange darkened 10% for hover */
+  --brand-orange-light:#FFF0E6;   /* Orange 6% tint for backgrounds */
+  --brand-navy-light:  #EEF1F7;   /* Navy 6% tint for backgrounds */
+
+  /* ── LIGHT THEME ──────────────────────────── */
+  --background:        0 0% 99%;         /* #FCFCFC */
+  --surface:           0 0% 100%;        /* #FFFFFF cards */
+  --surface-raised:    0 0% 97%;         /* #F7F7F7 hover */
+  --surface-overlay:   0 0% 94%;         /* #F0F0F0 pressed */
+  --card:              var(--surface);
+  --card-foreground:   220 47% 18%;      /* navy-ish dark text */
+  --popover:           var(--surface);
+  --popover-foreground: 220 47% 18%;
+
+  /* Sidebar uses brand navy */
+  --sidebar-background: 220 47% 18%;     /* #1E2D4B brand navy */
+  --sidebar-foreground: 220 20% 72%;     /* muted blue-gray */
+  --sidebar-primary:    24 100% 47%;     /* #F06900 orange */
+  --sidebar-active-bg:  rgba(240,105,0,0.12);
+  --sidebar-active-border: #F06900;
+  --sidebar-accent:     220 40% 22%;     /* slightly lighter navy */
+  --sidebar-border:     rgba(255,255,255,0.06);
+
+  /* Brand primary = orange */
+  --primary:            24 100% 47%;     /* #F06900 */
+  --primary-foreground: 0 0% 100%;       /* white on orange */
+  --primary-hover:      24 100% 42%;     /* #D95E00 */
+  --primary-muted:      24 100% 95%;     /* #FFF0E6 */
+
+  /* Secondary = navy */
+  --secondary:          220 47% 18%;     /* #1E2D4B */
+  --secondary-foreground: 0 0% 100%;
+
+  /* Semantic */
+  --success:            142 71% 40%;     /* #18A34A */
+  --success-muted:      141 79% 93%;
+  --warning:            38 92% 50%;      /* #F59E0B */
+  --warning-muted:      48 96% 89%;
+  --destructive:        0 84% 60%;       /* #EF4444 */
+  --destructive-foreground: 0 0% 100%;
+  --destructive-muted:  0 86% 94%;
+
+  /* Entry statuses */
+  --status-pending:     258 90% 66%;     /* #8B5CF6 violet */
+  --status-pending-muted: 258 100% 95%;
+  --status-approved:    142 71% 40%;
+  --status-approved-muted: 141 79% 93%;
+  --status-draft:       220 9% 46%;
+  --status-draft-muted: 220 14% 93%;
+
+  /* Text */
+  --foreground:         220 47% 18%;     /* #1E2D4B — brand navy as primary text */
+  --foreground-2:       220 15% 35%;     /* secondary text */
+  --foreground-3:       220 9% 52%;      /* muted text */
+  --foreground-4:       220 9% 68%;      /* placeholder */
+  --muted:              220 14% 96%;
+  --muted-foreground:   220 9% 46%;
+  --accent:             220 14% 96%;
+  --accent-foreground:  220 47% 18%;
+
+  /* Borders */
+  --border:             220 13% 91%;
+  --border-strong:      220 9% 80%;
+  --input:              220 13% 91%;
+  --ring:               24 100% 47%;     /* orange focus ring */
+  --radius:             0.625rem;
+}
+
+.dark {
+  /* Page & surfaces */
+  --background:         220 40% 6%;      /* #0C101A  deep navy-black */
+  --surface:            220 38% 9%;      /* #121825  card bg */
+  --surface-raised:     220 35% 13%;     /* #1A2235  hover */
+  --surface-overlay:    220 30% 17%;     /* #222D42  pressed */
+  --card:               var(--surface);
+  --card-foreground:    0 0% 96%;
+  --popover:            220 38% 11%;
+  --popover-foreground: 0 0% 96%;
+
+  /* Sidebar stays navy but deeper */
+  --sidebar-background: 220 47% 10%;     /* deeper navy */
+  --sidebar-foreground: 220 20% 55%;
+  --sidebar-primary:    24 100% 52%;     /* slightly brighter orange in dark */
+  --sidebar-active-bg:  rgba(240,105,0,0.15);
+  --sidebar-active-border: #FF7A1A;
+  --sidebar-accent:     220 40% 14%;
+  --sidebar-border:     rgba(255,255,255,0.05);
+
+  /* Brand primary */
+  --primary:            24 100% 52%;     /* brighter orange in dark */
+  --primary-foreground: 0 0% 100%;
+  --primary-hover:      24 100% 45%;
+  --primary-muted:      24 80% 12%;
+
+  /* Secondary */
+  --secondary:          220 35% 20%;
+  --secondary-foreground: 0 0% 90%;
+
+  /* Semantic */
+  --success:            142 71% 42%;
+  --success-muted:      142 60% 10%;
+  --warning:            38 92% 50%;
+  --warning-muted:      38 80% 10%;
+  --destructive:        0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --destructive-muted:  0 70% 12%;
+
+  /* Entry statuses */
+  --status-pending:     258 90% 70%;
+  --status-pending-muted: 258 50% 12%;
+  --status-approved:    142 71% 45%;
+  --status-approved-muted: 142 60% 10%;
+  --status-draft:       220 9% 52%;
+  --status-draft-muted: 220 30% 14%;
+
+  /* Text */
+  --foreground:         0 0% 96%;
+  --foreground-2:       220 10% 72%;
+  --foreground-3:       220 8% 52%;
+  --foreground-4:       220 8% 36%;
+  --muted:              220 35% 14%;
+  --muted-foreground:   220 10% 52%;
+  --accent:             220 35% 14%;
+  --accent-foreground:  0 0% 96%;
+
+  /* Borders */
+  --border:             220 30% 16%;
+  --border-strong:      220 25% 24%;
+  --input:              220 30% 16%;
+  --ring:               24 100% 52%;
+}
+}
+
+@layer base {
+  * { @apply border-border; }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
