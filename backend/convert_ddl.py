@@ -6,7 +6,8 @@ def parse_sql(sql):
     in_dollar_quote = False
     for line in sql.splitlines():
         line_no_comment = re.sub(r'--.*', '', line).strip()
-        if not line_no_comment: continue
+        if not line_no_comment:
+            continue
         if '$$' in line_no_comment:
             in_dollar_quote = not in_dollar_quote
             current_stmt.append(line_no_comment)
