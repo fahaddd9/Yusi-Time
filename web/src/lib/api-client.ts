@@ -2,7 +2,7 @@ import axios from 'axios'
 import { tokenStore } from './token-store'
 
 export const apiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1',
   withCredentials: true, // required for HttpOnly refresh cookie
 })
 

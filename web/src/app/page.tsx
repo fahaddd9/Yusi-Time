@@ -1,8 +1,35 @@
+import { cookies } from "next/headers"
+import { redirect } from "next/navigation"
+
+import { LandingNav } from "@/features/landing/LandingNav"
+import { HeroSection } from "@/features/landing/HeroSection"
+import { SocialProofStrip } from "@/features/landing/SocialProofStrip"
+import { FeaturesSection } from "@/features/landing/FeaturesSection"
+import { TimerDemoSection } from "@/features/landing/TimerDemoSection"
+import { ComparisonSection } from "@/features/landing/ComparisonSection"
+import { FinalCTA } from "@/features/landing/FinalCTA"
+import { LandingFooter } from "@/features/landing/LandingFooter"
+
 export default function Home() {
+  const cookieStore = cookies()
+  const hasRefreshToken = cookieStore.has("refresh_token")
+
+  if (hasRefreshToken) {
+    redirect("/dashboard")
+  }
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-24 bg-background text-foreground">
-      <h1 className="text-4xl font-bold font-sans">Yusi Time</h1>
-      <p className="mt-4 text-muted-foreground font-sans">Design System Loaded</p>
-    </main>
-  );
+    <div className="min-h-screen bg-background">
+      <LandingNav />
+      <main>
+        <HeroSection />
+        <SocialProofStrip />
+        <FeaturesSection />
+        <TimerDemoSection />
+        <ComparisonSection />
+        <FinalCTA />
+      </main>
+      <LandingFooter />
+    </div>
+  )
 }

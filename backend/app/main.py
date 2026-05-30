@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.logging import setup_logging, RequestLoggingMiddleware
 from app.core.exceptions import setup_exception_handlers
+from app.routers.auth import router as auth_router
 
 setup_logging()
 
@@ -17,6 +18,9 @@ app.add_middleware(
 app.add_middleware(RequestLoggingMiddleware)
 
 setup_exception_handlers(app)
+
+app.include_router(auth_router, prefix="/api/v1")
+
 
 @app.get("/health")
 async def health():
