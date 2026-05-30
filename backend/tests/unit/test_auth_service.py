@@ -15,13 +15,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.services.auth_service import (
     register,
     login,
-    refresh_tokens,
     initiate_password_reset,
     reset_password,
 )
 from app.models.user import User
-from app.models.workspace import Workspace
-from app.models.workspace_member import WorkspaceMember
 from app.models.password_reset_token import PasswordResetToken
 
 

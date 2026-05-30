@@ -11,7 +11,6 @@ Validator design notes:
 from pydantic import BaseModel, EmailStr, Field, field_validator
 from typing import Optional
 import uuid
-from datetime import datetime
 
 
 # ── Requests ───────────────────────────────────────────────────────────────

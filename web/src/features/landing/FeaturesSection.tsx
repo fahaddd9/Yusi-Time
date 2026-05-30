@@ -55,7 +55,7 @@ export function FeaturesSection() {
       <div className="container mx-auto px-4 md:px-6">
         <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
           <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">
-            Everything you need. Nothing you don't.
+            Everything you need. Nothing you don&apos;t.
           </h2>
           <p className="text-lg text-muted-foreground">
             Yusi Time strips away the clutter of traditional time trackers, leaving only the essential tools your team needs to stay productive.

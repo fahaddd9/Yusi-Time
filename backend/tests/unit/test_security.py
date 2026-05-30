@@ -12,7 +12,6 @@ All 5 scenarios from the Implementation Plan §1.2 are covered:
 Plus coverage for refresh tokens and the type-guard protection.
 """
 
-import time
 import pytest
 from unittest.mock import MagicMock
 from datetime import datetime, timedelta, timezone

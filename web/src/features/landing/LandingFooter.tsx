@@ -18,7 +18,7 @@ export function LandingFooter() {
               </span>
             </Link>
             <p className="text-sm">
-              The time tracker that doesn't feel like a time tracker.
+              The time tracker that doesn&apos;t feel like a time tracker.
             </p>
           </div>
           

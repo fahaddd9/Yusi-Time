@@ -5,7 +5,6 @@ Uses the async_client fixture from conftest.py which runs against the test DB.
 All 10 scenarios from Implementation Plan §1.8 are covered.
 """
 
-import pytest
 from httpx import AsyncClient
 
 

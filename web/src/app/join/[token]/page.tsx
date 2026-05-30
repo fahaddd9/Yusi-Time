@@ -74,7 +74,7 @@ export default function JoinWorkspacePage({ params }: { params: { token: string 
         </div>
         <div className="space-y-2">
           <h1 className="text-xl font-semibold tracking-tight text-foreground">
-            You've been invited!
+            You&apos;ve been invited!
           </h1>
           <p className="text-sm text-muted-foreground">
             You have been invited to join <strong>{invite?.workspace_name}</strong>{" "}
@@ -91,7 +91,7 @@ export default function JoinWorkspacePage({ params }: { params: { token: string 
             Accept Invitation
           </Button>
           <p className="text-xs text-muted-foreground">
-            If you don't have an account yet, you will be prompted to create one.
+            If you don&apos;t have an account yet, you will be prompted to create one.
           </p>
         </div>
       </div>
