@@ -12,7 +12,11 @@ from datetime import datetime
 
 
 class UserPublic(BaseModel):
-    """Full user profile returned to the authenticated user."""
+    """Full user profile returned to the authenticated user.
+
+    is_superadmin is always included — frontend reads this from GET /users/me
+    to gate Super Admin UI elements (Phase 7.5). MASTER_PROMPT §11.
+    """
     model_config = {"from_attributes": True}
 
     id: uuid.UUID
@@ -22,6 +26,7 @@ class UserPublic(BaseModel):
     timezone: Optional[str] = None
     weekly_hours_goal: Optional[int] = None
     is_active: bool
+    is_superadmin: bool
     created_at: datetime
     updated_at: datetime
 

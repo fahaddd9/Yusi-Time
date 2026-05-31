@@ -1,11 +1,13 @@
 """
-User model — maps to the `users` table (DB Schema v2.0 §4.1).
+User model — maps to the `users` table (DB Schema v2.2 §4.1).
 
 Business rules enforced here:
   - email stored as-is; queried via LOWER(email) functional index
   - google_id is UNIQUE NULL (allows multiple non-Google accounts)
   - password_hash is NULL for Google-only accounts
   - is_active=False → cannot log in (set during anonymization)
+  - is_superadmin=True → parallel bypass track, outside workspace_role enum.
+    Never set by any endpoint. Only via direct DB access by a system operator.
   - Record is NEVER hard-deleted; anonymized in-place to preserve
     referential integrity on time_entries, audit_logs, etc.
 """
@@ -39,6 +41,12 @@ class User(Base, TimestampMixin):
         nullable=True,
     )
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default="TRUE")
+    # DB Schema v2.2 — Super Admin flag.
+    # NEVER set by any endpoint or workspace Admin. Only via direct DB access.
+    # Always FALSE on every new account regardless of signup method (MASTER_PROMPT §11).
+    is_superadmin: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="FALSE"
+    )
 
     # ── Relationships ──────────────────────────────────────────────────────
     workspace_members: Mapped[list["WorkspaceMember"]] = relationship(  # type: ignore[name-defined]  # noqa: F821
@@ -58,4 +66,4 @@ class User(Base, TimestampMixin):
     )
 
     def __repr__(self) -> str:  # pragma: no cover
-        return f"<User id={self.id} email={self.email!r} active={self.is_active}>"
+        return f"<User id={self.id} email={self.email!r} active={self.is_active} superadmin={self.is_superadmin}>"

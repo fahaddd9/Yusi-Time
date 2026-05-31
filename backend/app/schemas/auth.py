@@ -77,13 +77,18 @@ class WorkspaceSummaryEmbedded(BaseModel):
 
 
 class UserEmbedded(BaseModel):
-    """Minimal user info returned inside auth responses."""
+    """Minimal user info returned inside auth responses.
+
+    is_superadmin always included — frontend reads this from signup/login responses
+    to gate Super Admin UI elements (Phase 7.5). MASTER_PROMPT §11.
+    """
     model_config = {"from_attributes": True}
 
     id: uuid.UUID
     email: str
     full_name: str
     avatar_url: Optional[str] = None
+    is_superadmin: bool
 
 
 class SignupResponse(BaseModel):
