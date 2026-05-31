@@ -26,7 +26,6 @@ from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 # Ensure app modules are importable
 from app.core.config import get_settings
 from app.core.security import hash_password
-from app.core.database import Base
 from app.models.user import User
 
 
