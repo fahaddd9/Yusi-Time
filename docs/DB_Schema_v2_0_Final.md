@@ -144,6 +144,7 @@ Core identity table. User records are **anonymized in-place** upon account delet
 | `timezone` | `TEXT` | `NULL` | `NULL` | IANA timezone string (e.g., `America/New_York`). Overrides workspace timezone for display |
 | `weekly_hours_goal` | `SMALLINT` | `NULL CHECK (weekly_hours_goal > 0)` | `NULL` | Personal weekly target in hours |
 | `is_active` | `BOOLEAN` | `NOT NULL` | `TRUE` | Set to `FALSE` on anonymization. Anonymized accounts cannot log in |
+| `is_superadmin` | `BOOLEAN` | `NOT NULL` | `FALSE` | Platform-level operator flag. When `TRUE`, bypasses all workspace membership checks and role-based access controls. Set directly in the database only — no UI or promotion flow. See DB Schema v2.2 Changelog §12 for full architecture. |
 | `created_at` | `TIMESTAMPTZ` | `NOT NULL` | `NOW()` | — |
 | `updated_at` | `TIMESTAMPTZ` | `NOT NULL` | `NOW()` | Maintained by trigger |
 
@@ -151,6 +152,7 @@ Core identity table. User records are **anonymized in-place** upon account delet
 - Email is stored and compared case-insensitively. Use a `LOWER(email)` functional index.
 - A user cannot delete their account if they are the sole `admin` in any non-deleted workspace. This is enforced in `auth_service.py`, not at the DB level.
 - `google_id` has a UNIQUE constraint to prevent two accounts linking to the same Google identity.
+- `is_superadmin` is set exclusively via direct database access by platform engineers. No application endpoint, no admin UI, and no workspace Admin role can set this flag. Defaults to `FALSE` for all new users including those created via `POST /auth/signup` and Google OAuth.
 
 ---
 
@@ -967,6 +969,7 @@ CREATE TABLE users (
   timezone          TEXT,
   weekly_hours_goal SMALLINT     CHECK (weekly_hours_goal > 0),
   is_active         BOOLEAN      NOT NULL DEFAULT TRUE,
+  is_superadmin     BOOLEAN      NOT NULL DEFAULT FALSE,
   created_at        TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
   updated_at        TIMESTAMPTZ  NOT NULL DEFAULT NOW()
 );

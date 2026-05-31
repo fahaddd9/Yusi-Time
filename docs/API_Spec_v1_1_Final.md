@@ -13,6 +13,7 @@
 |---------|------|--------|---------|
 | 1.0 | 2026-05-23 | YusiTime Architect | Initial final specification — all 40 endpoints fully described |
 | 1.1 | 2026-05-26 | YusiTime Architect | 3 new endpoints added: `POST /time-entries/{id}/continue`, `POST /time-entries/{id}/duplicate`, `GET /reports/weekly`. Appendix B updated. Error codes updated. Description draft is frontend-only — no API change needed. Dashboard continue reuses existing `POST /time-entries/start`. |
+| 1.2 | 2026-05-31 | YusiTime Architect | Super Admin backend added (API-only pass). No new endpoints in this pass. `UserPublic` schema updated to include `is_superadmin: bool`. Role hierarchy table updated. §1.10 updated with Super Admin bypass notes. Post-Phase 2 planned endpoints documented in DB Schema v2.2 Changelog §12. |
 
 ---
 
@@ -202,6 +203,16 @@ Validation errors (422):
 
 ### 1.10 Role Hierarchy & Authorization
 
+### 1.10 Role Hierarchy & Authorization
+
+**Super Admin note:** Any user with `is_superadmin = true` on the `users` table
+bypasses this entire table unconditionally. They are not a role within the
+`workspace_role` enum. They access all workspace endpoints via a synthetic
+`admin`-level membership and pass all `require_role` checks regardless of the
+required role. See DB Schema v2.2 Changelog §12 for full architecture.
+Super Admin-only endpoints (post-Phase 2) will use the `get_superadmin_user`
+dependency instead of `require_role`.
+
 | Capability | Admin | Manager | Member | Viewer |
 |-----------|-------|---------|--------|--------|
 | Manage workspace settings | ✅ | ❌ | ❌ | ❌ |
@@ -251,6 +262,7 @@ Enforced at the **service and Pydantic schema layer** on the server.
   "avatar_url": "string | null",
   "timezone": "string | null",
   "weekly_hours_goal": "integer | null",
+  "is_superadmin": "boolean",
   "created_at": "datetime"
 }
 ```

@@ -12,6 +12,7 @@
 |---------|------|---------|
 | 1.0 | 2026-05-22 | Initial draft |
 | 1.1 | 2026-05-23 | PRD reference updated to v1.3; Section 9 trimmed (no longer duplicates TRD/PRD decisions); `app/` directory prohibition added; MASTER_PROMPT.md conditional clarified; "commit frequently" instruction removed; added: output verification checklist, file creation rules, role enforcement reminders, Viewer data isolation reminder, schema mirror reminder, context window discipline, and recovery protocol |
+| 1.2 | 2026-05-31 | Super Admin rules added to §8 Output Verification Checklist and §11 Critical Business Rules. Pitfalls 13–15 added to recovery guidance. |
 
 ---
 
@@ -235,6 +236,13 @@ Before presenting any completed work for review, run through this checklist ment
 - [ ] Continue and Duplicate operations are strictly blocked on `pending` entries (returns 400).
 - [ ] Rejection note is mandatory — validated server-side (reject if blank).
 - [ ] Only Admins can generate invite links. Manager invite UI does not exist.
+- [ ] `is_superadmin` is **never present** in any request schema (`SignupRequest`, `LoginRequest`, any PATCH body).
+- [ ] `is_superadmin` is always `False` in the `register()` service function regardless of input.
+- [ ] `get_workspace_member()` short-circuits for Super Admin and returns synthetic member with `role='admin'`.
+- [ ] `require_role()` injects `current_user` as a second dependency and bypasses check when `is_superadmin is True`.
+- [ ] `get_superadmin_user()` dependency exists and raises `403` for non-super-admin users.
+- [ ] All `/admin/*` endpoints use `Depends(get_superadmin_user)` not `Depends(require_role('admin'))`.
+- [ ] No Super Admin frontend routes or components exist before Phase 7.5.
 
 **TRD v1.2 alignment**:
 - [ ] No file created inside `app/` directory.
@@ -355,6 +363,45 @@ These are the most commonly misimplemented rules. Check each one whenever you wr
 
 ### `app/` Directory
 - **Never write any file to `yusi-time/app/`** during MVP phases. This is an absolute prohibition.
+
+### Super Admin (`is_superadmin` Flag)
+
+- **Parallel track, not a role.** `is_superadmin` is a boolean column on `users`.
+  It is never a value in `workspace_role`. Never add `'superadmin'` to any role
+  enum, role check, or role comparison anywhere in the codebase.
+
+- **Dependency bypass only.** The entire Super Admin implementation lives in
+  `dependencies.py`. No router, no service, no model, and no schema outside of
+  `dependencies.py` needs to know about `is_superadmin` — except the `User` model
+  (column definition) and `UserPublic` schema (field exposure).
+
+- **Synthetic member object.** When `is_superadmin is True`, `get_workspace_member()`
+  constructs a `WorkspaceMember()` in memory with `role='admin'` and returns it
+  without querying the database. This object satisfies the type contract for all
+  downstream code.
+
+- **Unconditional role bypass.** When `is_superadmin is True`, `require_role()`
+  returns the member object immediately. It does not evaluate `member.role` against
+  the required roles. Every role gate is bypassed — `require_role('admin')`,
+  `require_role('manager')`, `require_role('member')` — all unconditionally passed.
+
+- **Database-only assignment.** No endpoint accepts `is_superadmin` as input.
+  No service function sets it. It defaults to `False` at the model level and
+  can only be changed via direct SQL by platform engineers.
+
+- **`get_superadmin_user` for `/admin/*` routes.** Any endpoint on the
+  `/admin/` prefix must use `Depends(get_superadmin_user)` as its auth
+  dependency. Using `Depends(require_role('admin'))` on these endpoints is
+  incorrect — it would allow workspace Admins to call platform-level endpoints.
+
+- **No frontend before Phase 7.5.** Do not create any file under
+  `web/src/app/superadmin/` before Phase 7.5 begins and is approved.
+  The `is_superadmin` field in `UserPublic` is present from Phase 1.5 onward
+  but no UI component reads it until Phase 7.5.
+
+- **No audit logging in Phase 1.5.** Super Admin-specific audit logging is
+  deferred. Standard service-layer `audit_logs` writes still occur for any
+  mutations Super Admin makes through existing endpoints.
 
 ---
 

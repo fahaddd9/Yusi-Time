@@ -1,21 +1,24 @@
 # Yusi Time — Project State
 **Last Updated:** 2026-05-31 — Phase 1 Completed
-**Current Phase:** Phase 2 — Workspace & Members — ⬜ Not Started
-**Last Session Summary:** Phase 1 completely verified. All auth tests are green. Logos updated. Ready to begin Phase 2.
+**Current Phase:** Phase 1.5 — Super Admin Backend (API-only) — ⬜ Not Started
+**Last Session Summary:** Phase 1 completely verified. All auth tests are green. Logos updated. Ready to begin Phase 1.5.
 
 ---
 
 ## Phase Summary Table
 
 | Phase | Name | Status | Date Completed |
+|-------|------|--------|----------------|
 | 0 | Setup & Infrastructure | ✅ Completed | 2026-05-29 |
 | 1 | Authentication | ✅ Completed | 2026-05-31 |
+| 1.5 | Super Admin Backend (API-only) | ⬜ Not Started | — |
 | 2 | Workspace & Members | ⬜ Not Started | — |
 | 3 | Projects, Tasks, Clients, Tags | ⬜ Not Started | — |
 | 4 | Time Tracking Core | ⬜ Not Started | — |
 | 5 | Continue, Duplicate & Draft | ⬜ Not Started | — |
 | 6 | Approvals & Notifications | ⬜ Not Started | — |
 | 7 | Reports & Analytics | ⬜ Not Started | — |
+| 7.5 | Super Admin UI Dashboard | ⬜ Not Started | — |
 | 8 | Webhooks, Polish & Deploy | ⬜ Not Started | — |
 
 **Status legend:** ⬜ Not Started | 🔄 In Progress | ✅ Completed | ❌ Blocked
@@ -24,7 +27,7 @@
 
 ## Current Phase Detail
 
-### Phase 2 — Workspace & Members — ⬜ Not Started
+### Phase 1.5 — Super Admin Backend (API-only) — ⬜ Not Started
 
 #### Steps Completed
 *(None)*
@@ -33,21 +36,20 @@
 *(None)*
 
 #### Steps Remaining
-- Step 2.1 [BE] — Remaining Phase 2 Models (Invite, AuditLog, Notification)
-- Step 2.2 [BE] — Workspace Schemas
-- Step 2.3 [BE] — Workspace Service + Router
-- Step 2.4 [BE] — Member Service + Router
-- Step 2.5 [BE] — Invite Service + Router
-- Step 2.6 [BE] — User CRUD Endpoints
-- Step 2.7 [BE] — Phase 2 Tests
-- Step 2.8 [FE] — App Shell Scaffold + Zustand Stores
-- Step 2.9 [FE] — Sidebar Component
-- Step 2.10 [FE] — Workspace Settings Pages
-- Step 2.11 [FE] — Member & Invite Management Pages
-- Step 2.12 [FE] — User Profile & Settings Page
+- [ ] Step 1.5.1 — `models/user.py` — `is_superadmin` column added
+- [ ] Step 1.5.2 — `schemas/user.py` — `is_superadmin` field in `UserPublic`
+- [ ] Step 1.5.3 — `dependencies.py` — synthetic bypass + require_role bypass + get_superadmin_user
+- [ ] Step 1.5.4 — Alembic migration generated, reviewed, and applied
+- [ ] Step 1.5.5 — Super Admin account seeded in database
+- [ ] Step 1.5.6 — Unit and integration tests written and passing
 
-#### Decisions Made This Phase
-*(None yet)*
+#### Decisions Made
+- is_superadmin is a boolean flag on users table, not a workspace_role enum value
+- Synthetic member object always carries role='admin' for serialization
+- require_role() injects current_user as second dependency for bypass check
+- get_superadmin_user() added now for pattern establishment; no endpoints use it yet
+- No frontend, no audit logging, no UI in this pass
+- Super Admin UI deferred to Phase 7.5 (after Phase 2 populated with real data)
 
 #### Issues / Bugs Discovered and Resolved
 *(None yet)*
@@ -56,7 +58,9 @@
 *(None)*
 
 #### Test Results
-*(Phase not started — no results yet)*
+- pytest: pending
+- Coverage: pending
+- ruff: pending
 
 #### Phase 2 Completion Status
 0% complete. Ready to begin Phase 2.

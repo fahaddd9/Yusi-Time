@@ -37,12 +37,14 @@ A phase is ONLY complete when:
 |-------|------|-----------------|------------|
 | 0 | Setup & Infrastructure | Monorepo, DB, Docker, CI, design system | Medium |
 | 1 | Authentication | Auth endpoints, JWT, Google OAuth, landing page, auth screens | High |
+| 1.5 | Super Admin Backend | `is_superadmin` flag, dependency bypasses, migration | Low |
 | 2 | Workspace & Members | Workspace CRUD, invite system, settings pages | High |
 | 3 | Projects, Tasks, Clients & Tags | Full entity CRUD, project screens, settings | High |
 | 4 | Time Tracking Core | Timer, manual entry, rounding, dashboard, timesheet grid | Very High |
 | 5 | Continue, Duplicate & Draft | 2 new endpoints, Continue/Duplicate UI, draft hook | Medium |
 | 6 | Approvals & Notifications | Approval workflow, notification system | High |
 | 7 | Reports & Analytics | Summary, Detailed, Weekly reports, charts, export | High |
+| 7.5 | Super Admin UI Dashboard | `/superadmin` Next.js dashboard, platform API endpoints | High |
 | 8 | Webhooks, Polish & Deployment | Webhooks, UI polish, accessibility, AWS deploy | Medium |
 
 ---
@@ -1189,6 +1191,156 @@ FRONTEND:
 [ ] All focus rings visible in orange color
 [ ] Middleware: visiting /dashboard without cookie redirects to /login
 ```
+
+---
+
+---
+
+## PHASE 1.5 — Super Admin Backend (API-Only)
+
+**Goal:** Add the `is_superadmin` boolean to the `users` table and implement
+the three dependency changes in `dependencies.py` that give Super Admin users
+unconditional platform-level access. No frontend work. No new routers. The
+`get_superadmin_user` dependency is added now to establish the pattern cleanly
+for the post-Phase 2 UI phase.
+
+**Dependencies:** Phase 1 complete.
+**Prerequisite reading:** DB Schema v2.2 Changelog §12, TRD v1.3 §6.5.
+
+---
+
+### Step 1.5.1 [BE] — Add `is_superadmin` to User Model
+
+**File:** `backend/app/models/user.py`
+
+Find the `is_active` column definition:
+```python
+is_active = Column(Boolean, nullable=False, default=True)
+```
+
+Add directly after:
+```python
+is_superadmin = Column(Boolean, nullable=False, default=False)
+```
+
+**Verify:** Python import of `User` model succeeds with no errors.
+
+---
+
+### Step 1.5.2 [BE] — Add `is_superadmin` to UserPublic Schema
+
+**File:** `backend/app/schemas/user.py`
+
+Find the `UserPublic` class and add `is_superadmin: bool` after
+`weekly_hours_goal`:
+
+```python
+weekly_hours_goal: int | None
+is_superadmin: bool
+created_at: datetime
+```
+
+**Verify:** `UserPublic.model_fields` contains `is_superadmin`.
+
+---
+
+### Step 1.5.3 [BE] — Update Dependencies
+
+**File:** `backend/app/core/dependencies.py`
+
+Three changes in this file:
+
+**A) Modify `get_workspace_member()`** — add synthetic member bypass for
+Super Admin before the DB query. Full implementation in DB Schema v2.2
+Changelog §12 Application Layer section.
+
+**B) Modify `require_role()`** — inject `current_user` as second dependency
+parameter and add unconditional Super Admin bypass before the role check.
+Full implementation in DB Schema v2.2 Changelog §12 Application Layer section.
+
+**C) Add `get_superadmin_user()`** — new dependency function that wraps
+`get_current_user` and raises `403 FORBIDDEN` if `is_superadmin is False`.
+Full implementation in DB Schema v2.2 Changelog §12 Application Layer section.
+
+**Verify:** All three functions import cleanly. Existing tests still pass.
+
+---
+
+### Step 1.5.4 [BE] — Generate and Apply Migration
+
+```bash
+cd backend
+alembic revision --autogenerate -m "add_is_superadmin_to_users"
+```
+
+Review the generated file. Confirm:
+- `upgrade()` adds: `is_superadmin BOOLEAN NOT NULL DEFAULT FALSE`
+- `downgrade()` drops the column cleanly
+
+```bash
+alembic upgrade head
+```
+
+---
+
+### Step 1.5.5 [BE] — Seed Super Admin Account
+
+```sql
+UPDATE users SET is_superadmin = TRUE WHERE email = 'your-founder-email@example.com';
+```
+
+Run directly against your database. Confirm with:
+```sql
+SELECT email, is_superadmin FROM users WHERE is_superadmin = TRUE;
+```
+
+---
+
+### Step 1.5.6 [BE] — Write Tests
+
+**File:** `backend/tests/unit/test_superadmin.py`
+
+```python
+# Required test cases — all must pass:
+
+async def test_get_workspace_member_superadmin_returns_synthetic_admin_role(): ...
+async def test_get_workspace_member_superadmin_does_not_query_workspace_members(): ...
+async def test_require_role_superadmin_bypasses_admin_check(): ...
+async def test_require_role_superadmin_bypasses_member_check(): ...
+async def test_require_role_superadmin_bypasses_viewer_check(): ...
+async def test_require_role_normal_user_still_enforced(): ...
+async def test_get_superadmin_user_returns_user_when_flag_true(): ...
+async def test_get_superadmin_user_raises_403_when_flag_false(): ...
+async def test_register_new_user_always_has_superadmin_false(): ...
+async def test_google_oauth_new_user_always_has_superadmin_false(): ...
+```
+
+**File:** `backend/tests/integration/test_superadmin.py`
+
+```python
+async def test_superadmin_accesses_workspace_without_membership_200(async_client): ...
+async def test_superadmin_accesses_admin_only_endpoint_without_admin_role_200(async_client): ...
+async def test_normal_user_calls_admin_endpoint_gets_403(async_client): ...
+async def test_superadmin_response_includes_is_superadmin_true(async_client): ...
+async def test_normal_user_response_includes_is_superadmin_false(async_client): ...
+```
+
+---
+
+### Phase 1.5 — Testing Checklist
+[ ] alembic upgrade head applies cleanly — is_superadmin column exists in users table
+[ ] alembic downgrade reverses cleanly
+[ ] GET /users/me response includes is_superadmin: true for seeded founder account
+[ ] GET /users/me response includes is_superadmin: false for normal user
+[ ] Super Admin user calls GET /workspaces/{id} with no membership → 200
+[ ] Super Admin user calls endpoint requiring admin role with member role → 200
+[ ] Normal user calls GET /admin/* → 403 FORBIDDEN (when admin router exists)
+[ ] Newly registered user via POST /auth/signup → is_superadmin: false
+[ ] is_superadmin field absent from SignupRequest schema (cannot be set via API)
+[ ] pytest tests/unit/test_superadmin.py — all 10 cases pass
+[ ] pytest tests/integration/test_superadmin.py — all 5 cases pass
+[ ] pytest tests/ -v --cov=app --cov-fail-under=80 — overall coverage maintained
+[ ] ruff check app/ — zero warnings
 
 ---
 
@@ -2749,6 +2901,272 @@ BACKEND + FRONTEND combined:
 [ ] Cell click in Weekly opens Popover with entries
 [ ] All pages correct in light + dark mode
 ```
+---
+
+## PHASE 7.5 — Super Admin UI Dashboard
+
+**Goal:** Build the complete Super Admin Next.js dashboard at `/superadmin`.
+This phase adds the platform-level backend API endpoints (`/admin/*`) and the
+full frontend dashboard. By this point Phase 2 (Workspace & Members) is fully
+implemented, meaning real workspace and user data exists to populate and test
+the dashboard immediately.
+
+**Dependencies:** Phase 7 complete. Phase 2 must be complete (real workspace
+and member data required for meaningful Super Admin UI).
+**Prerequisite reading:** UI/UX Blueprint v2.0 Part 14 (Super Admin Dashboard),
+DB Schema v2.2 Changelog §12, TRD v1.3 §6.5.
+
+---
+
+### Step 7.5.1 [BE] — Create Admin Router
+
+**File:** `backend/app/routers/admin.py` *(new file)*
+
+All endpoints in this router use `Depends(get_superadmin_user)` as their
+auth dependency. No workspace membership is required.
+
+Implement these endpoints:
+
+```python
+GET  /admin/workspaces          # List ALL workspaces, paginated, with member_count
+GET  /admin/workspaces/{id}     # Get single workspace full detail
+GET  /admin/users               # List ALL users, paginated, with workspace_count
+GET  /admin/users/{id}          # Get single user full detail + workspace memberships
+GET  /admin/stats               # Platform aggregate statistics
+```
+
+Register in `main.py`:
+```python
+app.include_router(admin_router, prefix="/api/v1")
+```
+
+---
+
+### Step 7.5.2 [BE] — Admin Service
+
+**File:** `backend/app/services/admin_service.py` *(new file)*
+
+```python
+async def list_all_workspaces(db, page, per_page) -> list[WorkspaceAdminView]:
+    """List all workspaces across platform. No workspace_id filter."""
+
+async def get_workspace_detail(db, workspace_id) -> WorkspaceAdminView:
+    """Get full workspace detail. No membership check."""
+
+async def list_all_users(db, page, per_page) -> list[UserAdminView]:
+    """List all users across platform with workspace membership counts."""
+
+async def get_user_detail(db, user_id) -> UserAdminDetail:
+    """Get single user with all workspace memberships and roles."""
+
+async def get_platform_stats(db) -> PlatformStats:
+    """
+    Returns:
+      total_workspaces: int
+      total_users: int
+      total_time_entries: int
+      active_timers_now: int
+      new_workspaces_last_30_days: int
+      new_users_last_30_days: int
+    """
+```
+
+---
+
+### Step 7.5.3 [BE] — Admin Schemas
+
+**File:** `backend/app/schemas/admin.py` *(new file)*
+
+```python
+class WorkspaceAdminView(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID
+    name: str
+    logo_url: str | None
+    default_timezone: str
+    currency: str
+    member_count: int
+    approval_workflow_enabled: bool
+    deleted_at: datetime | None
+    created_at: datetime
+
+class UserAdminView(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID
+    full_name: str
+    email: str
+    is_superadmin: bool
+    is_active: bool
+    workspace_count: int
+    created_at: datetime
+
+class UserAdminDetail(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID
+    full_name: str
+    email: str
+    avatar_url: str | None
+    timezone: str | None
+    is_superadmin: bool
+    is_active: bool
+    created_at: datetime
+    workspaces: list[WorkspaceMembershipView]
+
+class WorkspaceMembershipView(BaseModel):
+    workspace_id: UUID
+    workspace_name: str
+    role: str
+    joined_at: datetime
+
+class PlatformStats(BaseModel):
+    total_workspaces: int
+    total_users: int
+    total_time_entries: int
+    active_timers_now: int
+    new_workspaces_last_30_days: int
+    new_users_last_30_days: int
+```
+
+---
+
+### Step 7.5.4 [BE] — Admin Tests
+
+**File:** `backend/tests/unit/test_admin_service.py`
+
+```python
+async def test_list_all_workspaces_returns_all_no_filter(): ...
+async def test_list_all_workspaces_pagination_correct(): ...
+async def test_get_workspace_detail_no_membership_required(): ...
+async def test_list_all_users_returns_all_users(): ...
+async def test_get_user_detail_includes_workspace_memberships(): ...
+async def test_platform_stats_returns_correct_counts(): ...
+async def test_platform_stats_active_timers_count_correct(): ...
+```
+
+**File:** `backend/tests/integration/test_admin_router.py`
+
+```python
+async def test_get_admin_workspaces_superadmin_200(async_client): ...
+async def test_get_admin_workspaces_normal_user_403(async_client): ...
+async def test_get_admin_users_superadmin_200(async_client): ...
+async def test_get_admin_stats_superadmin_200(async_client): ...
+async def test_admin_workspace_list_includes_all_workspaces(async_client): ...
+```
+
+---
+
+### Step 7.5.5 [FE] — Super Admin Route Guard in Middleware
+
+**File:** `web/src/middleware.ts`
+
+Add `/superadmin` to the protected prefixes list:
+```typescript
+const protectedPrefixes = ['/dashboard', '/timesheet', '/projects',
+                            '/reports', '/approvals', '/settings',
+                            '/superadmin']
+```
+
+Add Super Admin redirect guard after the existing auth check:
+```typescript
+// Super Admin route protection
+if (pathname.startsWith('/superadmin')) {
+  // Middleware cannot read is_superadmin from JWT (not in token payload)
+  // The AppShell will handle the redirect on client-side mount
+  // Middleware only ensures the user is authenticated
+}
+```
+
+**Note:** The `is_superadmin` check is enforced client-side in the Super Admin
+layout component (Step 7.5.6), not in middleware, because the flag is not
+stored in the JWT. The middleware guarantees authentication; the layout
+guarantees Super Admin authorization.
+
+---
+
+### Step 7.5.6 [FE] — Super Admin App Shell Layout
+
+**File:** `web/src/app/superadmin/layout.tsx` *(new file)*
+
+```tsx
+'use client'
+export default function SuperAdminLayout({ children }) {
+  // On mount: call GET /users/me
+  // If is_superadmin === false: redirect to /dashboard
+  // If is_superadmin === true: render Super Admin shell
+
+  // Shell structure:
+  // <div className="flex h-screen bg-background">
+  //   <SuperAdminSidebar />
+  //   <main className="flex-1 overflow-y-auto">{children}</main>
+  // </div>
+}
+```
+
+Full component specification in UI/UX Blueprint v2.0 Part 14.
+
+---
+
+### Step 7.5.7 [FE] — Super Admin Pages
+
+Create all pages per UI/UX Blueprint v2.0 Part 14:
+
+| File | Route | Description |
+|------|-------|-------------|
+| `app/superadmin/page.tsx` | `/superadmin` | Stats dashboard home |
+| `app/superadmin/workspaces/page.tsx` | `/superadmin/workspaces` | All workspaces list |
+| `app/superadmin/workspaces/[id]/page.tsx` | `/superadmin/workspaces/[id]` | Single workspace detail |
+| `app/superadmin/users/page.tsx` | `/superadmin/users` | All users list |
+| `app/superadmin/users/[id]/page.tsx` | `/superadmin/users/[id]` | Single user detail |
+
+---
+
+### Step 7.5.8 [FE] — Super Admin API Layer
+
+**File:** `web/src/features/superadmin/api.ts` *(new file)*
+
+```typescript
+export const superAdminApi = {
+  getStats: () =>
+    apiClient.get('/admin/stats'),
+  listWorkspaces: (page = 1, perPage = 20) =>
+    apiClient.get('/admin/workspaces', { params: { page, per_page: perPage } }),
+  getWorkspace: (id: string) =>
+    apiClient.get(`/admin/workspaces/${id}`),
+  listUsers: (page = 1, perPage = 20) =>
+    apiClient.get('/admin/users', { params: { page, per_page: perPage } }),
+  getUser: (id: string) =>
+    apiClient.get(`/admin/users/${id}`),
+}
+```
+
+---
+
+### Phase 7.5 — Testing Checklist
+
+```
+BACKEND:
+[ ] GET /admin/workspaces (Super Admin) → 200 with all workspaces
+[ ] GET /admin/workspaces (normal user) → 403 FORBIDDEN
+[ ] GET /admin/workspaces/{id} (Super Admin, not a member) → 200
+[ ] GET /admin/users (Super Admin) → 200 with all users
+[ ] GET /admin/users/{id} (Super Admin) → 200 with memberships
+[ ] GET /admin/stats (Super Admin) → 200 with correct counts
+[ ] active_timers_now reflects real running timers
+[ ] pytest tests/unit/test_admin_service.py — all pass
+[ ] pytest tests/integration/test_admin_router.py — all pass
+
+FRONTEND:
+[ ] /superadmin inaccessible to non-super-admin → redirected to /dashboard
+[ ] Super Admin sidebar visible only when is_superadmin=true
+[ ] Stats cards show correct platform numbers
+[ ] Workspace list loads all workspaces with member counts
+[ ] Workspace detail page loads without membership
+[ ] User list loads all users
+[ ] User detail shows workspace memberships
+[ ] All pages correct in light + dark mode
+[ ] pnpm tsc --noEmit → zero errors
+[ ] pnpm build → success
+```
 
 ---
 
@@ -2923,6 +3341,8 @@ Phase 0 (Setup)
     ↓
 Phase 1 (Auth + Landing)
     ↓
+Phase 1.5 (Super Admin Backend)
+    ↓
 Phase 2 (Workspace & Members)
     ↓
 Phase 3 (Projects, Tasks, Clients, Tags)
@@ -2934,6 +3354,8 @@ Phase 5 (Continue, Duplicate & Draft)
 Phase 6 (Approvals & Notifications)
     ↓
 Phase 7 (Reports & Analytics)
+    ↓
+Phase 7.5 (Super Admin UI Dashboard)
     ↓
 Phase 8 (Webhooks, Polish & Deploy)
     ↓

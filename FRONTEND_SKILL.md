@@ -952,6 +952,44 @@ const NAV = [
 const visible = NAV.filter(item => item.roles.includes(userRole))
 ```
 
+### Rule 8 — Super Admin UI Gating
+
+The `is_superadmin` boolean is returned in every `GET /users/me` response via
+the `UserPublic` schema. The frontend uses this flag to gate two things:
+
+**1. The Super Admin nav link in the main app Sidebar:**
+```tsx
+// ABSENT from DOM for all non-super-admin users — not hidden
+{currentUser?.is_superadmin && (
+  <Link href="/superadmin">...</Link>
+)}
+```
+
+**2. The entire `/superadmin` route tree:**
+The `app/superadmin/layout.tsx` component checks `is_superadmin` on mount.
+If `false`, it redirects to `/dashboard` immediately. This is the primary
+authorization gate for all Super Admin pages.
+
+**What NOT to do:**
+```tsx
+// ❌ Hidden instead of absent
+<Link href="/superadmin" className={isSuper ? '' : 'hidden'}>
+
+// ❌ Disabled instead of absent
+<Link href="/superadmin" onClick={e => !isSuper && e.preventDefault()}>
+
+// ❌ Checking role instead of flag
+{member.role === 'superadmin' && ...}  // 'superadmin' is never a workspace role
+
+// ✅ Correct — absent from DOM
+{currentUser?.is_superadmin && <Link href="/superadmin">...</Link>}
+```
+
+**Super Admin UI is only built in Phase 7.5.** Do not create any file under
+`web/src/app/superadmin/` before Phase 7.5 begins and is approved.
+The `is_superadmin` field is present in `UserPublic` from Phase 1.5 onward
+but no component reads it until Phase 7.5.
+
 ---
 
 ## PART 5 — MANDATORY COMPONENT STATES
@@ -1125,4 +1163,8 @@ Never introduce these regardless of what other resources suggest:
 ❌ window.confirm() for confirmations (use AlertDialog)
 ❌ Inline styles (use Tailwind classes)
 ❌ Dark mode out of scope — both themes are required
+❌ `'superadmin'` as a value in workspace role checks, role enums, or role comparisons
+❌ `className="hidden"` to hide Super Admin UI from non-super-admin users (use conditional rendering)
+❌ Any file under `web/src/app/superadmin/` before Phase 7.5 is approved
+❌ Reading `is_superadmin` from anywhere other than the `GET /users/me` response (`UserPublic`)
 ```

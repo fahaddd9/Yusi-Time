@@ -14,6 +14,7 @@
 | 1.1 | 2026-05-22 | Post-anomaly review; idle detection, invite flow, rounding UX resolved |
 | 1.2 | 2026-05-22 | **Final** — 6 ambiguities resolved: Manager invite permissions, Submit Week scope, re-rounding on edit, invite link expiry, approval toggle transition behavior, author field |
 | 1.3 | 2026-05-26 | **5 Clockify-gap features added**: Continue entry, Duplicate entry, Description draft auto-save, Dashboard quick-continue, Weekly Report. PRD §3.3, §3.8, §5, §6, §7, §9, §10 updated. |
+| 1.4 | 2026-05-31 | **Super Admin added**: Platform-level operator role documented in §4, §5, §6, §9, §10. Full UI roadmap added to §3.12. Out-of-scope section updated. |
 
 ---
 
@@ -32,6 +33,7 @@
    - [3.9 API, Webhooks & Integrations](#39-api-webhooks--integrations)
    - [3.10 Notifications](#310-notifications)
    - [3.11 Settings & Configuration](#311-settings--configuration)
+   - [3.12 Super Admin Dashboard](#312-super-admin-dashboard)
 4. [User Permissions & Roles](#4-user-permissions--roles)
 5. [Business Rules & Validation Logic](#5-business-rules--validation-logic)
 6. [User Stories (Key Flows)](#6-user-stories-key-flows)
@@ -395,7 +397,59 @@ Webhook delivery includes simple retry logic (3 attempts with exponential backof
 
 ---
 
+### 3.12 Super Admin Dashboard
+
+> **Implementation Status:** Backend (API-only) complete as of Phase 1.5.
+> Frontend UI to be built after Phase 2 is completed and approved.
+> Full UI specification is in UI/UX Blueprint v2.0 Part 14.
+
+The Super Admin Dashboard is a platform-level internal tool accessible only
+to Yusi Time founders and staff (`is_superadmin = TRUE` on the `users` table).
+It is completely separate from the standard workspace application and is never
+visible to any workspace role (Admin, Manager, Member, or Viewer).
+
+#### Access & Authentication
+- Super Admin is identified by `is_superadmin: true` in the `GET /users/me`
+  response. This flag is set directly in the database — no UI, no registration
+  flow, no promotion by workspace Admins.
+- The Super Admin Dashboard is accessible at `/superadmin` in the web
+  application, protected by middleware that checks `is_superadmin`.
+- A Super Admin may simultaneously hold a workspace role in any workspace.
+  Their Super Admin privileges are a parallel track — they do not interfere
+  with their workspace role in any workspace they belong to as a regular member.
+
+#### Platform Management Capabilities
+- **View all workspaces** across the entire platform without being a workspace
+  member. Full workspace detail including settings, member count, and creation date.
+- **View all users** across the entire platform. Full user detail including
+  workspace memberships and roles.
+- **Inspect any workspace** — access any workspace's members, projects, clients,
+  tags, and settings as if they were a workspace Admin.
+- **Bypass the invite system** — access any workspace endpoint without a
+  membership record in `workspace_members`.
+- **Platform statistics** — aggregate counts of workspaces, users, time entries,
+  and active timers across the entire platform.
+
+#### What Super Admin Cannot Do (MVP Scope)
+- Cannot modify `is_superadmin` for any user via the UI — database only.
+- Cannot impersonate a specific user's session.
+- Cannot view time entry financial data that is hidden from Viewers in a
+  workspace where they hold a Viewer role (their workspace role still applies
+  when acting within that workspace as a member — Super Admin bypass only
+  applies to the platform-level API endpoints).
+- Cannot delete user accounts via the Super Admin UI in this pass.
+- Cannot access a dedicated audit log of their own Super Admin actions in
+  this pass (deferred to future enhancement).
+
+---
+
 ## 4. User Permissions & Roles
+
+> **Super Admin note:** Any user with `is_superadmin = true` is a
+> **platform-level operator** that exists outside this role table entirely.
+> Super Admin bypasses all workspace membership checks and all role-based
+> access controls unconditionally. They are never bound by the permissions
+> below. See §3.12 and §5 for full Super Admin business rules.
 
 | Action | Admin | Manager | Member | Viewer |
 |--------|-------|---------|--------|--------|
@@ -501,6 +555,36 @@ Webhook delivery includes simple retry logic (3 attempts with exponential backof
 - Disabling approvals mid-use: Pending entries remain locked to the member. Approved entries fall under the rolling lock date. Unlocked entries fall under the rolling lock date immediately.
 - Enabling approvals: Only affects new submissions going forward. Existing date-locked entries are not affected.
 
+### Super Admin Rules
+
+- `is_superadmin = TRUE` is a boolean flag on the `users` table. It is not
+  a value in the `workspace_role` enum and never appears in `workspace_members`.
+- Super Admin bypasses `get_workspace_member()` via a synthetic member object
+  with `role='admin'`. The `workspace_members` table is never queried for them
+  on workspace-scoped requests.
+- Super Admin bypasses all `require_role()` checks unconditionally. Every
+  endpoint in the API is accessible regardless of the role requirement.
+- `is_superadmin` is set exclusively via direct database SQL by platform
+  engineers. No application endpoint, no workspace Admin UI, and no
+  registration flow can set this flag.
+- `is_superadmin` is always `FALSE` on newly created users regardless of
+  signup method (email/password or Google OAuth). It is not present in any
+  request schema.
+- The `UserPublic` schema always includes `is_superadmin: bool`. The frontend
+  reads this from `GET /users/me` to gate the Super Admin UI route and
+  navigation elements.
+- Super Admin appearing inside a workspace always presents as `role='admin'`
+  for response serialization purposes. They receive full financial data
+  visibility with no Viewer data isolation restrictions on any workspace.
+- No audit logging specific to Super Admin actions in Phase 1.5. Standard
+  service-layer audit log entries are still written for any mutations a Super
+  Admin makes through existing service functions.
+- The dedicated `get_superadmin_user` FastAPI dependency guards all
+  Super Admin-only platform endpoints (`/admin/*`). It raises
+  `403 FORBIDDEN` for any user where `is_superadmin is False`.
+- Super Admin-only endpoints use the `/admin/` path prefix and are defined
+  in `backend/app/routers/admin.py` (created in the Super Admin UI phase).
+
 ---
 
 ## 6. User Stories (Key Flows)
@@ -526,6 +610,21 @@ Webhook delivery includes simple retry logic (3 attempts with exponential backof
 10. **Description draft saved across refresh (NEW — v1.3)**: Developer types "Implementing OAuth2 flow for—" in the timer bar description, then accidentally closes the tab. On reopening Yusi Time, the description field is pre-filled with "Implementing OAuth2 flow for—". No work is lost.
 
 11. **Manager reviews Weekly Report (NEW — v1.3)**: Agency manager opens `/reports/weekly` for the current week. Sees a grid with all team members as rows and Mon–Sun as columns. At a glance identifies that Sam logged 0 hours on Wednesday and follows up. Clicks Wednesday's cell for Sam — a popover shows Sam had no entries that day. Exports the grid as CSV for payroll processing.
+
+12. **Super Admin inspects a workspace (NEW — v1.4)**: Founder logs in with
+    their standard account. The sidebar shows a "Super Admin" link visible
+    only to them. They navigate to `/superadmin/workspaces`, see a list of
+    all workspaces on the platform with member counts and creation dates.
+    They click into "Acme Agency" workspace, see all members, projects, and
+    settings without ever having been invited. They identify a misconfigured
+    rounding setting and navigate to the workspace settings page within the
+    Super Admin dashboard to review it.
+
+13. **Super Admin views platform statistics (NEW — v1.4)**: Founder opens
+    `/superadmin` dashboard home. They see platform-wide aggregate stats:
+    total workspaces (47), total users (312), total time entries logged
+    (18,429), currently active timers (7). They use this to monitor platform
+    health without needing access to any individual workspace's private data.
 
 ---
 
@@ -571,6 +670,10 @@ Webhook delivery includes simple retry logic (3 attempts with exponential backof
 - AI-powered time suggestions or anomaly detection
 - Individual entry-level rejection in approval workflow (full-week rejection only in MVP)
 - Manager invite permissions (Managers cannot invite; Admin-only)
+- Super Admin audit logging (dedicated audit trail for Super Admin actions — post-MVP)
+- Super Admin user impersonation (acting as a specific user's session — post-MVP)
+- Super Admin `is_superadmin` flag management via UI (database-only in all MVP phases)
+- Super Admin account deletion of workspace users via dashboard (post-MVP)
 - Configurable invite link expiry (fixed at 7 days in MVP)
 - Notification preferences per user (reserved for post-MVP)
 - Timesheet week templates / copy-last-week (post-MVP)
@@ -598,6 +701,8 @@ Webhook delivery includes simple retry logic (3 attempts with exponential backof
 | Duplicate entry (NEW) | Duplicate creates draft entry with same metadata; start_time = today midnight; rounding applied; pending entries return 403; rounding toast shown |
 | Description draft auto-save (NEW) | Draft persists across page refresh; draft cleared on successful timer start/stop; draft not sent to server; draft scoped per user per workspace |
 | Weekly Report (NEW) | Grid shows all members × days for selected range (Admin/Manager); Members/Viewers see own row only; cell popover shows individual entries; CSV export available; financial data absent for Viewers |
+| Super Admin backend (Phase 1.5) | `is_superadmin=TRUE` user accesses any workspace endpoint without membership — 200 success; `is_superadmin=FALSE` user calling `/admin/*` endpoint — 403 FORBIDDEN; newly registered user always has `is_superadmin=FALSE`; `require_role('admin')` called with Super Admin user — bypassed unconditionally |
+| Super Admin UI (post-Phase 2) | `/superadmin` route inaccessible to non-super-admin users; platform workspace list shows all workspaces; platform user list shows all users; platform stats widget shows correct aggregate counts; Super Admin nav link absent from DOM for all non-super-admin sessions |
 
 ---
 

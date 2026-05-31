@@ -1,8 +1,19 @@
 # Yusi Time — UI/UX Blueprint
-**Version:** 2.0 (Final — Logo Colors + 5 New Features + Landing Page)
+**Version:** 2.1 (Super Admin Dashboard Added — Full Spec)
 **Date:** 2026-05-26
 **Status:** Finalized ✅
-**Aligned With:** PRD v1.3 · TRD v1.2 · DB Schema v2.1 · API Spec v1.1 · FRONTEND_SKILL.md
+**Aligned With:** PRD v1.4 · TRD v1.3 · DB Schema v2.2 · API Spec v1.2 · FRONTEND_SKILL.md
+
+---
+
+## Revision History
+
+| Version | Date | Changes |
+|---------|------|---------|
+| 2.0 | 2026-05-26 | Initial final version — logo colors, 5 new features, landing page, all 21 screens |
+| 2.1 | 2026-05-31 | Part 14 added — complete Super Admin Dashboard specification (Phase 7.5). Route inventory updated. Component tree updated. Screen count updated to 26. |
+
+---
 **Stack:** Next.js 14 App Router · TypeScript strict · Tailwind CSS (darkMode:class) · shadcn/ui · next-themes · lucide-react · Framer Motion · TanStack Query v5 · Zustand · React Hook Form + Zod
 
 ---
@@ -260,6 +271,11 @@ POST /auth/refresh   Protected app
 | `/settings/tags` | `app/(app)/settings/tags/page.tsx` | Yes | manager | Tags |
 | `/settings/webhooks` | `app/(app)/settings/webhooks/page.tsx` | Yes | admin | Webhooks |
 | `/settings/profile` | `app/(app)/settings/profile/page.tsx` | Yes | viewer | Profile |
+| `/superadmin` | `app/superadmin/page.tsx` | Yes | superadmin | SA Stats Dashboard |
+| `/superadmin/workspaces` | `app/superadmin/workspaces/page.tsx` | Yes | superadmin | SA All Workspaces |
+| `/superadmin/workspaces/[id]` | `app/superadmin/workspaces/[id]/page.tsx` | Yes | superadmin | SA Workspace Detail |
+| `/superadmin/users` | `app/superadmin/users/page.tsx` | Yes | superadmin | SA All Users |
+| `/superadmin/users/[id]` | `app/superadmin/users/[id]/page.tsx` | Yes | superadmin | SA User Detail |
 
 ### 0.3 Global Component Tree
 
@@ -292,6 +308,12 @@ app/layout.tsx (Server)
                       ├── NotificationBell → Sheet panel
                       ├── IdleModal (blocks all interaction, no dismiss)
                       └── <main> → page content
+                  └── app/superadmin/layout.tsx → SuperAdminShell (Phase 7.5)
+                      ├── SuperAdminSidebar
+                      │   ├── Logo (YT mark + "Super Admin" label)
+                      │   ├── SuperAdminNav (Stats / Workspaces / Users)
+                      │   └── UserFooter + ThemeToggle + "← Back to App" link
+                      └── <main> → superadmin page content
 ```
 
 ---
@@ -2254,4 +2276,517 @@ are unaffected. The update is isolated to one section of one file.
 *Components: 9 modal/overlay + 8 shared = 17 components*
 *New features: Continue, Duplicate, Description Draft, Weekly Report, Dashboard Continue — all fully specified*
 *Brand: Navy #1E2D4B + Orange #F06900 applied consistently across all screens*
-*Aligned to: PRD v1.3 · TRD v1.2 · DB Schema v2.1 · API Spec v1.1 · FRONTEND_SKILL.md*
+*Aligned to: PRD v1.4 · TRD v1.3 · DB Schema v2.2 · API Spec v1.2 · FRONTEND_SKILL.md*
+
+---
+
+## PART 14 — SUPER ADMIN DASHBOARD (Phase 7.5)
+
+> **Implementation gate:** Do not build any component in this section until
+> Phase 7 is completed and approved AND Phase 2 (Workspace & Members) is
+> confirmed complete with real data. The backend endpoints in Step 7.5.1–7.5.4
+> must exist before any frontend work begins.
+
+### SA0 — Super Admin Design Language
+
+The Super Admin dashboard uses a **deliberately distinct visual identity**
+from the main application. This is intentional — it prevents confusion
+between the platform-level view and a regular workspace view.
+PRIMARY SURFACE:    bg-zinc-950   (#09090B) — deeper than main app dark bg
+SECONDARY SURFACE:  bg-zinc-900   (#18181B) — cards and panels
+ACCENT COLOR:       #F06900       — same brand-orange (consistency)
+DANGER COLOR:       #EF4444       — same destructive red
+TEXT PRIMARY:       #FAFAFA       — near-white
+TEXT MUTED:         #71717A       — zinc-500
+BORDER:             #27272A       — zinc-800
+BADGE — ACTIVE:     bg-green-950 text-green-400 border-green-800
+BADGE — DELETED:    bg-red-950 text-red-400 border-red-800
+BADGE — SUPERADMIN: bg-orange-950 text-brand-orange border-orange-800
+
+**Visual signature:**
+The sidebar uses `bg-zinc-950` (darker than the main app's `bg-brand-navy`)
+with an amber/orange "SUPER ADMIN" pill label beneath the logo mark. This
+immediately communicates to the operator that they are in a privileged
+platform-level context, not a regular workspace.
+
+**Typography:** Same DM Sans + DM Mono stack as the main application.
+All aggregate numbers use `font-mono`.
+
+---
+
+### SA1 — Super Admin Shell Layout
+**File:** `app/superadmin/layout.tsx`
+
+#### Step 1 — Auth Guard
+```tsx
+'use client'
+// On mount: GET /users/me
+// If is_superadmin === false OR request fails: redirect to /dashboard
+// Never show any superadmin content before auth confirmed
+// Loading state: full-screen zinc-950 bg with centered brand-orange spinner
+```
+
+#### Step 2 — Shell Structure
+```tsx
+<div className="flex h-screen bg-zinc-950 overflow-hidden">
+  <SuperAdminSidebar />           {/* w-56 fixed */}
+  <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+    <SuperAdminTopBar />          {/* h-[48px] */}
+    <main className="flex-1 overflow-y-auto p-6 bg-zinc-950">
+      {children}
+    </main>
+  </div>
+</div>
+```
+
+#### Step 3 — SuperAdminSidebar
+bg-zinc-950 border-r border-zinc-800 w-56
+TOP (h-16 border-b border-zinc-800 px-4):
+YT mark (30px bg-brand-orange rounded-lg "YT" text-white font-bold)
+"Yusi" text-sm font-bold text-white + "Time" text-sm font-bold text-brand-orange
+Below: "SUPER ADMIN" pill
+bg-orange-950 text-brand-orange text-[9px] font-bold uppercase
+tracking-widest px-2 py-0.5 rounded-full border border-orange-800
+NAV ITEMS (px-3 py-2):
+Section label "PLATFORM" (text-[9px] uppercase text-zinc-600 tracking-wider px-2 pt-3 pb-1)
+LayoutDashboard → "Dashboard"      /superadmin
+Building2       → "Workspaces"     /superadmin/workspaces
+Users           → "Users"          /superadmin/users
+Active item: bg-brand-orange/12 text-white border-l-2 border-brand-orange
+pl-[6px] font-medium
+Default item: text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60
+FOOTER (border-t border-zinc-800 px-3 py-3):
+Avatar (26px initials, bg-brand-orange text-white)
+Name text-[12px] text-zinc-400 truncate flex-1
+ThemeToggle (ghost, text-zinc-500)
+Separator (my-2 border-zinc-800)
+"← Back to App" link
+ArrowLeft icon (12px) + "Back to App" text-[11px] text-zinc-500
+hover:text-zinc-300 → navigates to /dashboard
+
+#### Step 4 — SuperAdminTopBar
+h-[48px] bg-zinc-900 border-b border-zinc-800
+flex items-center justify-between px-6
+LEFT: Breadcrumb
+Current page name text-sm font-medium text-zinc-200
+Separator + section name text-xs text-zinc-500
+RIGHT:
+"SUPER ADMIN SESSION" amber pill
+bg-amber-950 text-amber-400 border border-amber-800
+text-[10px] font-semibold uppercase tracking-wider px-3 py-1 rounded-full
+AlertTriangle icon (10px) left
+This pill is a persistent reminder that the operator is in a privileged context
+---
+
+### SA2 — Super Admin Stats Dashboard
+**File:** `app/superadmin/page.tsx`
+**API:** `GET /admin/stats`
+
+#### Step 1 — Page Header
+"Platform Overview" text-xl font-semibold text-zinc-100 tracking-tight
+"Real-time statistics across all workspaces and users."
+text-sm text-zinc-500 mt-1
+
+#### Step 2 — Stats Cards Grid
+grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6
+All cards: bg-zinc-900 border border-zinc-800 rounded-xl p-4
+hover:border-zinc-700 transition-colors duration-200
+
+**Card 1 — Total Workspaces**
+Building2 icon (20px text-brand-orange) top-right
+"WORKSPACES" text-[10px] uppercase tracking-wider text-zinc-500
+font-mono text-3xl font-bold text-zinc-100 (the count)
+"+{n} last 30 days" text-xs text-green-400 mt-1
+
+**Card 2 — Total Users**
+Users icon (20px text-brand-orange) top-right
+"USERS" label
+font-mono text-3xl font-bold text-zinc-100
+"+{n} last 30 days" text-xs text-green-400
+
+**Card 3 — Total Time Entries**
+Clock icon (20px text-brand-orange) top-right
+"TIME ENTRIES" label
+font-mono text-3xl font-bold text-zinc-100
+"All time" text-xs text-zinc-500
+
+**Card 4 — Active Timers Right Now**
+Timer icon (20px) — pulsing orange dot indicator left of icon
+dot: w-2 h-2 bg-brand-orange rounded-full animate-pulse
+"ACTIVE TIMERS" label
+font-mono text-3xl font-bold text-brand-orange (orange = live data)
+"Live count" text-xs text-zinc-500
+Refresh every 30s via refetchInterval
+
+**Card 5 — New Workspaces (30 days)**
+TrendingUp icon (20px text-green-400)
+"NEW WORKSPACES" label
+font-mono text-3xl font-bold text-zinc-100
+"Last 30 days" text-xs text-zinc-500
+
+**Card 6 — New Users (30 days)**
+UserPlus icon (20px text-green-400)
+"NEW USERS" label
+font-mono text-3xl font-bold text-zinc-100
+"Last 30 days" text-xs text-zinc-500
+
+#### Step 3 — Quick Links
+"Quick Access" text-sm font-semibold text-zinc-400 mb-3
+Two cards side by side (grid grid-cols-2 gap-3):
+Card A: "All Workspaces →"
+bg-zinc-900 border border-zinc-800 rounded-xl p-4
+Building2 icon (24px text-brand-orange) + count
+hover:border-brand-orange/40 cursor-pointer → /superadmin/workspaces
+Card B: "All Users →"
+Users icon (24px text-brand-orange) + count
+hover:border-brand-orange/40 cursor-pointer → /superadmin/users
+
+#### Step 4 — Loading State
+6 skeleton cards matching exact card shapes
+Skeleton className="bg-zinc-800" (darker skeleton for dark bg)
+
+#### Step 5 — Error State
+AlertTriangle (40px text-amber-400) centered
+"Could not load platform stats"
+"Retry" button (bg-brand-orange text-white)
+
+---
+
+### SA3 — All Workspaces List
+**File:** `app/superadmin/workspaces/page.tsx`
+**API:** `GET /admin/workspaces`
+
+#### Step 1 — Header
+"Workspaces" text-xl font-semibold text-zinc-100
+"{total} total" badge (bg-zinc-800 text-zinc-400 text-xs px-2 py-0.5 rounded-md ml-2)
+Right side:
+Search input (bg-zinc-900 border-zinc-700 text-zinc-200 placeholder:text-zinc-500
+focus:border-brand-orange rounded-lg h-9 w-[260px])
+MagnifyingGlass icon left inside input
+
+#### Step 2 — Workspaces Table
+bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden
+Table columns:
+WORKSPACE | MEMBERS | TIMEZONE | APPROVAL | CREATED | STATUS | ACTIONS
+Each row (h-[52px] border-b border-zinc-800 hover:bg-zinc-800/50):
+WORKSPACE:
+Logo avatar (28px, initials, bg-brand-orange/20 text-brand-orange)
+OR logo image if logo_url set
+Workspace name font-medium text-sm text-zinc-100
+workspace.id text-[10px] text-zinc-600 font-mono (below name, on hover)
+MEMBERS:
+font-mono text-sm text-zinc-300
+Users icon (12px text-zinc-600) left
+TIMEZONE:
+text-xs text-zinc-400 font-mono
+APPROVAL:
+"Enabled" badge: bg-green-950 text-green-400 border-green-800 text-[10px]
+"Disabled" badge: bg-zinc-800 text-zinc-500 text-[10px]
+CREATED:
+text-xs text-zinc-400 font-mono
+Formatted as "May 26, 2026"
+STATUS:
+"Active" badge: bg-green-950 text-green-400 border border-green-800
+"Deleted" badge: bg-red-950 text-red-400 border border-red-800
+(deleted_at IS NOT NULL → Deleted)
+ACTIONS:
+Eye icon button → /superadmin/workspaces/{id}
+hover: text-brand-orange bg-brand-orange/8 rounded-md p-1.5
+Tooltip: "View workspace"
+
+#### Step 3 — Pagination
+Standard limit-offset pagination controls
+"Showing {from}–{to} of {total}"
+Previous / Next buttons (bg-zinc-800 border-zinc-700 text-zinc-300)
+Active page: bg-brand-orange text-white
+
+#### Step 4 — Loading State
+10 × TableRowSkeleton with bg-zinc-800 skeleton color
+
+#### Step 5 — Empty State
+Building2 (40px text-zinc-600)
+"No workspaces found"
+
+---
+
+### SA4 — Workspace Detail
+**File:** `app/superadmin/workspaces/[id]/page.tsx`
+**API:** `GET /admin/workspaces/{id}`
+**Also uses:** `GET /workspaces/{id}` (via synthetic member bypass),
+`GET /workspaces/{id}/members`
+
+#### Step 1 — Header
+Back link: "← All Workspaces" text-sm text-brand-orange → /superadmin/workspaces
+Workspace name text-2xl font-bold text-zinc-100
+workspace.id text-xs text-zinc-600 font-mono mt-0.5
+Status badge + Created date text-xs text-zinc-500
+
+#### Step 2 — Info Cards Row
+grid grid-cols-2 md:grid-cols-4 gap-3 mb-5
+Card: Members count (font-mono text-2xl font-bold text-zinc-100)
+Card: Timezone (font-mono text-sm text-zinc-300)
+Card: Currency (font-mono text-sm text-zinc-300)
+Card: Approval Workflow (enabled/disabled badge)
+
+#### Step 3 — Settings Panel
+bg-zinc-900 border border-zinc-800 rounded-xl p-5 mb-4
+"Workspace Settings" text-sm font-semibold text-zinc-400 mb-4
+Two-column grid (grid-cols-2 gap-x-8 gap-y-3):
+Each setting row:
+Label text-xs text-zinc-500 uppercase tracking-wider
+Value text-sm font-medium text-zinc-200 (or font-mono for numbers)
+Settings shown:
+Rounding Mode | Rounding Interval
+Lock Period (days) | Past Entry Limit (days)
+Mandatory Description | Max Timer Duration
+Idle Detection | Idle Timeout
+Approval Workflow | Date Format
+
+#### Step 4 — Members Table
+"Members ({count})" text-sm font-semibold text-zinc-400 mb-3
+bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden
+Columns: MEMBER | ROLE | JOINED | INVITED BY
+Each row (h-[48px]):
+Avatar (26px) + name text-sm text-zinc-200 + email text-[11px] text-zinc-500
+Role badge (same status badge colors as main app but on dark zinc background)
+Joined date text-xs text-zinc-400 font-mono
+Invited by name text-xs text-zinc-500 (or "Workspace Creator")
+
+#### Step 5 — Danger Zone Panel (READ ONLY in this pass)
+border border-red-900/40 rounded-xl p-5
+"Workspace Info" text-sm font-semibold text-red-400 mb-3
+Shows deleted_at if set:
+"Scheduled for deletion: {date}" bg-red-950 text-red-400 rounded-lg p-3
+CalendarX icon + date font-mono
+If not deleted:
+"Workspace is active" bg-green-950 text-green-400 rounded-lg p-3
+CheckCircle2 icon + "No deletion scheduled"
+Note text-xs text-zinc-600:
+"Workspace management actions (delete, restore) are performed
+via direct database access in this phase."
+
+---
+
+### SA5 — All Users List
+**File:** `app/superadmin/users/page.tsx`
+**API:** `GET /admin/users`
+
+#### Step 1 — Header
+"Users" text-xl font-semibold text-zinc-100
+"{total} total" badge (bg-zinc-800)
+Right: Search input (same style as SA3)
++ Filter: "All" | "Super Admins" | "Inactive" (tab pills)
+
+#### Step 2 — Users Table
+bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden
+Columns: USER | WORKSPACES | SUPER ADMIN | ACTIVE | JOINED | ACTIONS
+Each row (h-[52px]):
+USER:
+Avatar (28px initials, gradient)
+Name font-medium text-sm text-zinc-100
+Email text-[11px] text-zinc-500
+WORKSPACES:
+font-mono text-sm text-zinc-300
+Count of workspace memberships
+SUPER ADMIN:
+"Yes" badge: bg-orange-950 text-brand-orange border border-orange-800 text-[10px]
+"No" text-zinc-600 text-[11px] (not a badge — de-emphasized)
+ACTIVE:
+"Active" badge: bg-green-950 text-green-400 border-green-800 text-[10px]
+"Inactive" badge: bg-zinc-800 text-zinc-500 text-[10px]
+(is_active=FALSE → Inactive, anonymized accounts)
+JOINED:
+text-xs text-zinc-400 font-mono
+ACTIONS:
+Eye icon → /superadmin/users/{id}
+Tooltip: "View user"
+
+#### Step 3 — Super Admin filter tab
+"Super Admins" tab shows only users where is_superadmin=TRUE
+Implemented as client-side filter on the fetched data
+(platform will have very few super admins — no server-side filter needed)
+
+---
+
+### SA6 — User Detail
+**File:** `app/superadmin/users/[id]/page.tsx`
+**API:** `GET /admin/users/{id}`
+
+#### Step 1 — Header
+Back link: "← All Users" text-sm text-brand-orange
+Avatar (48px, initials, gradient) + name text-2xl font-bold text-zinc-100
+Email text-sm text-zinc-400 font-mono
+user.id text-xs text-zinc-600 font-mono mt-0.5
+Status badges row:
+is_active badge (Active/Inactive)
+is_superadmin badge (shown only if TRUE:
+"SUPER ADMIN" bg-orange-950 text-brand-orange border-orange-800
+Crown icon (12px) left)
+
+#### Step 2 — Profile Info Card
+bg-zinc-900 border border-zinc-800 rounded-xl p-5 mb-4
+Two-column grid:
+Full Name | Email
+Timezone | Weekly Hours Goal
+Google ID (font-mono text-xs, or "—" if null)
+Created At | Last Updated
+
+#### Step 3 — Workspace Memberships Table
+"Workspace Memberships ({count})" text-sm font-semibold text-zinc-400 mb-3
+bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden
+Columns: WORKSPACE | ROLE | JOINED
+Each row (h-[48px]):
+Workspace name text-sm text-zinc-200
+workspace_id text-[10px] text-zinc-600 font-mono (below name, de-emphasized)
+Role badge (same colors as main app)
+Joined date text-xs text-zinc-400 font-mono
+"View →" link text-xs text-brand-orange → /superadmin/workspaces/{workspace_id}
+Empty state:
+"This user has no workspace memberships."
+text-sm text-zinc-500 py-6 text-center
+
+#### Step 4 — Account Status Panel
+bg-zinc-900 border border-zinc-800 rounded-xl p-5
+"Account Status" text-sm font-semibold text-zinc-400 mb-4
+is_active:
+Active: CheckCircle2 text-green-400 + "Account is active"
+Inactive: XCircle text-red-400 + "Account has been anonymized"
++ anonymized email shown in font-mono text-xs text-zinc-600
+is_superadmin:
+TRUE: Crown icon text-brand-orange + "Platform Super Admin"
++ "This account has unconditional access to all platform endpoints."
+text-xs text-zinc-500 mt-1
+FALSE: (section hidden entirely)
+Note text-xs text-zinc-600 mt-4:
+"User management actions (anonymize, grant super admin) are performed
+via direct database access in this phase."
+
+---
+
+### SA7 — Super Admin Navigation Addition to Main App Sidebar
+
+The main app Sidebar (in the regular workspace shell) must show a subtle
+Super Admin link for users where `is_superadmin=true`. This link is
+**completely absent from the DOM** for all other users.
+
+**File:** `web/src/features/layout/components/Sidebar.tsx`
+
+Add at the bottom of the nav section, before the footer, only when `is_superadmin=true`:
+
+```tsx
+{currentUser?.is_superadmin && (
+  <>
+    <div className="mx-3 my-2 border-t border-white/6" />
+    <div className="px-2 pb-1">
+      <span className="text-[9px] font-semibold text-white/25 uppercase tracking-[0.08em] px-2">
+        Platform
+      </span>
+    </div>
+    <Link href="/superadmin">
+      <div className={cn(
+        "flex items-center gap-2.5 px-2 py-2 rounded-lg text-[13px] mx-1 transition-all duration-120",
+        pathname.startsWith('/superadmin')
+          ? "bg-brand-orange/12 text-white font-medium border-l-2 border-brand-orange pl-[6px]"
+          : "text-white/45 hover:text-white/80 hover:bg-white/5"
+      )}>
+        <Crown className="w-4 h-4 flex-shrink-0" />
+        <span>Super Admin</span>
+        <span className="ml-auto text-[9px] bg-orange-950 text-brand-orange
+                         border border-orange-800 px-1.5 py-0.5 rounded font-bold">
+          SA
+        </span>
+      </div>
+    </Link>
+  </>
+)}
+```
+
+**Key rules:**
+- `{currentUser?.is_superadmin && ...}` — absent from DOM, not hidden
+- The "SA" badge in the nav item serves as a persistent reminder
+- Link goes to `/superadmin` (the stats dashboard home)
+- Active state when `pathname.startsWith('/superadmin')`
+
+---
+
+### SA8 — Type Definitions
+
+**File:** `web/src/features/superadmin/types.ts` *(new file)*
+
+```typescript
+export interface WorkspaceAdminView {
+  id: string
+  name: string
+  logo_url: string | null
+  default_timezone: string
+  currency: string
+  member_count: number
+  approval_workflow_enabled: boolean
+  deleted_at: string | null
+  created_at: string
+}
+
+export interface UserAdminView {
+  id: string
+  full_name: string
+  email: string
+  is_superadmin: boolean
+  is_active: boolean
+  workspace_count: number
+  created_at: string
+}
+
+export interface UserAdminDetail extends UserAdminView {
+  avatar_url: string | null
+  timezone: string | null
+  workspaces: WorkspaceMembershipView[]
+}
+
+export interface WorkspaceMembershipView {
+  workspace_id: string
+  workspace_name: string
+  role: string
+  joined_at: string
+}
+
+export interface PlatformStats {
+  total_workspaces: number
+  total_users: number
+  total_time_entries: number
+  active_timers_now: number
+  new_workspaces_last_30_days: number
+  new_users_last_30_days: number
+}
+```
+
+---
+
+### SA9 — React Query Hooks
+
+**File:** `web/src/features/superadmin/hooks.ts` *(new file)*
+
+```typescript
+export const superAdminKeys = {
+  stats:      () => ['superadmin', 'stats'] as const,
+  workspaces: (page: number) => ['superadmin', 'workspaces', page] as const,
+  workspace:  (id: string) => ['superadmin', 'workspace', id] as const,
+  users:      (page: number) => ['superadmin', 'users', page] as const,
+  user:       (id: string) => ['superadmin', 'user', id] as const,
+}
+
+// Stale times:
+// stats:      30_000 (30s, with refetchInterval: 30_000 for active timers)
+// workspaces: 60_000
+// workspace:  60_000
+// users:      60_000
+// user:       60_000
+```
+
+---
+
+*Blueprint v2.1 complete.*
+*Screens: 20 + 1 Landing Page + 5 Super Admin screens = 26 total screens*
+*Components: 9 modal/overlay + 8 shared + 3 Super Admin shell = 20 components*
+*New features (v2.1): Super Admin Dashboard — SA1 through SA9 fully specified*
+*Brand: Navy #1E2D4B + Orange #F06900 applied consistently. Super Admin uses Zinc palette with Orange accent.*
+*Aligned to: PRD v1.4 · TRD v1.3 · DB Schema v2.2 · API Spec v1.2 · FRONTEND_SKILL.md*

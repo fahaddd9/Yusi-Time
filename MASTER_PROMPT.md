@@ -62,7 +62,7 @@ When two documents conflict on the same topic, the higher-ranked document wins.
 | Priority | Document | File Location | Authority Scope |
 |----------|----------|--------------|-----------------|
 | 1 | **PRD v1.3 (Final)** | `docs/PRD_v1_3_Final.md` | WHAT to build — features, roles, business rules, acceptance criteria, user stories |
-| 2 | **DB Schema v2.1 + API Spec v1.1** | `docs/DB_Schema_v2_1_Changelog.md` · `docs/API_Spec_v1_1_Final.md` | Exact table DDL, field types, constraints, all 76 endpoint contracts |
+| 2 | **DB Schema v2.2 + API Spec v1.2** | `docs/DB_Schema_v2_1_Changelog.md` · `docs/API_Spec_v1_1_Final.md` | Exact table DDL, field types, constraints, all 76 endpoint contracts. v2.2 adds `is_superadmin` to `users` and documents Super Admin bypass architecture. |
 | 3 | **TRD v1.2 (Final)** | `docs/TRD_v1_2_Final.md` | HOW to build — stack, architecture, folder structures, service signatures, security |
 | 4 | **UI/UX Blueprint v2.0** | `docs/UI_UX_BLUEPRINT_v2.md` | Screen-by-screen layout, component states, brand color tokens, interaction patterns |
 | 5 | **FRONTEND_SKILL.md** | `FRONTEND_SKILL.md` (root) | Design philosophy, CSS variable system, Tailwind config, component code standards |
@@ -656,6 +656,26 @@ Weekly Report: billable_hours, total_billable_amount, grand_total_billable_amoun
                absent for Viewer role
 ```
 
+### Super Admin (`is_superadmin` Flag)
+- `is_superadmin = TRUE` is a **parallel track** — it exists outside and above
+  the `workspace_role` enum. It is not a workspace role.
+- Super Admin bypasses `get_workspace_member()` via a **synthetic member object**
+  with `role='admin'`. The `workspace_members` table is never queried for them.
+- Super Admin bypasses **all** `require_role()` checks unconditionally.
+- `is_superadmin` is set **only via direct database access**. No endpoint, no
+  UI, and no workspace Admin can set or modify this flag.
+- `is_superadmin` is **always `FALSE`** on newly created users regardless of
+  signup method (email/password or Google OAuth).
+- The `UserPublic` schema **always includes `is_superadmin: bool`** in API
+  responses. The frontend reads this from `GET /users/me` to gate future
+  Super Admin UI elements.
+- **No frontend UI exists** for Super Admin in the current pass. The dedicated
+  Next.js dashboard will be built after Phase 2 is completed and approved.
+- **No audit logging** for Super Admin actions in the current pass. Standard
+  service-layer audit log writes still occur for any mutations.
+- The `get_superadmin_user` dependency is available for future Super Admin-only
+  endpoints. No endpoints currently use it — it exists to establish the pattern.
+
 ---
 
 ## SECTION 12 — PROJECT STATE TRACKING
@@ -671,18 +691,20 @@ update `PROJECT_STATE.md` using this exact template:
 
 ---
 
-## Phase Summary Table
+## Phase Summary
 
-| Phase | Name | Status | Date Completed |
-|-------|------|--------|----------------|
+| Phase | Name | Status | Completed |
+|-------|------|--------|-----------|
 | 0 | Setup & Infrastructure | ⬜ Not Started | — |
 | 1 | Authentication | ⬜ Not Started | — |
+| 1.5 | Super Admin Backend (API-only) | ⬜ Not Started | — |
 | 2 | Workspace & Members | ⬜ Not Started | — |
 | 3 | Projects, Tasks, Clients, Tags | ⬜ Not Started | — |
 | 4 | Time Tracking Core | ⬜ Not Started | — |
 | 5 | Continue, Duplicate & Draft | ⬜ Not Started | — |
 | 6 | Approvals & Notifications | ⬜ Not Started | — |
 | 7 | Reports & Analytics | ⬜ Not Started | — |
+| 7.5 | Super Admin UI Dashboard | ⬜ Not Started | — |
 | 8 | Webhooks, Polish & Deploy | ⬜ Not Started | — |
 
 Status legend: ⬜ Not Started | 🔄 In Progress | ✅ Completed | ❌ Blocked
@@ -990,6 +1012,31 @@ equivalents. The only blues in this UI are navy (`brand-navy`) and never action 
 **Cause:** The "block if entries exist" check was not implemented.
 **Fix:** Before hard-delete, query `SELECT COUNT(*) FROM time_entries WHERE project_id = ?`.
 If count > 0, raise `400 BAD_REQUEST` with message "Archive instead — time entries exist."
+
+### Pitfall 13 — Super Admin Treated as a Workspace Role
+**Symptom:** Code checks `member.role == 'superadmin'` or adds `'superadmin'`
+to the `workspace_role` enum.
+**Cause:** Misunderstanding the parallel-track architecture.
+**Fix:** `is_superadmin` is a boolean flag on the `users` table, never a value
+in `workspace_role`. All role checks remain exactly as written. The bypass
+happens exclusively in `get_workspace_member()` and `require_role()` in
+`dependencies.py`. No other file needs to know about `is_superadmin`.
+
+### Pitfall 14 — Super Admin Flag Exposed in Signup Request
+**Symptom:** `SignupRequest` Pydantic schema includes an `is_superadmin` field,
+or the `register()` service function accepts it as a parameter.
+**Cause:** Treating `is_superadmin` like a normal user-settable field.
+**Fix:** `is_superadmin` is never in any request schema. It is hardcoded to
+`False` at the model level (`default=False`). The only way to set it is a
+direct SQL `UPDATE` by a platform engineer.
+
+### Pitfall 15 — Using `require_role` for Super Admin-Only Endpoints
+**Symptom:** A Super Admin-only endpoint uses `Depends(require_role('admin'))`
+instead of `Depends(get_superadmin_user)`.
+**Cause:** Conflating workspace-admin access with platform-operator access.
+**Fix:** Any endpoint that should be accessible **only** to `is_superadmin=TRUE`
+users must use `Depends(get_superadmin_user)`. Using `require_role('admin')`
+would allow any workspace Admin to call it, which is incorrect.
 
 ---
 

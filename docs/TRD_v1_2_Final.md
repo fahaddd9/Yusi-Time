@@ -14,6 +14,7 @@
 | 1.0 | 2026-05-22 | Initial draft |
 | 1.1 | 2026-05-23 | PRD reference updated to v1.2; monorepo structure added; JWT storage strategy resolved; webhook retry aligned; invite link endpoints added; approval toggle transition added to services; rate snapshot coverage completed; pagination threshold defined; local email dev strategy added; `app/` directory placeholder documented |
 | 1.2 | 2026-05-26 | **PRD reference updated to v1.3. 5 Clockify-gap features integrated:** `continue_entry()` and `duplicate_entry()` added to `time_entry_service.py`; `get_weekly_report()` added to `report_service.py`; `useDescriptionDraft` hook added to frontend; `/reports/weekly` route added; rate_service coverage extended to continue/duplicate; testing section updated with new test cases; frontend routing updated; Headless UI replaced by shadcn/ui; dual light/dark theme system (next-themes) documented; design tokens updated to CSS variable system; new frontend dependencies added |
+| 1.3 | 2026-05-31 | **Super Admin backend added (API-only pass).** `is_superadmin` boolean column added to `User` model. `get_workspace_member()` dependency updated with synthetic member bypass. `require_role()` updated with unconditional Super Admin bypass. New `get_superadmin_user()` dependency added. `UserPublic` schema updated. No frontend changes. No new routers in this pass. Full architecture documented in DB Schema v2.2 Changelog §12. |
 
 ---
 
@@ -332,9 +333,40 @@ class Settings(BaseSettings):
 
 **Authorization flow per request:**
 1. `get_current_user` → decode access token
-2. `get_workspace_member` → confirm workspace membership
-3. `require_role` → confirm role meets endpoint requirement
+2. `get_workspace_member` → confirm workspace membership (or bypass for Super Admin)
+3. `require_role` → confirm role meets endpoint requirement (or bypass for Super Admin)
 All via FastAPI `Depends()` chaining.
+
+**Super Admin authorization bypass:**
+
+Super Admin (`is_superadmin = TRUE`) short-circuits the standard authorization
+flow at steps 2 and 3. The implementation lives entirely in `dependencies.py`
+and requires zero changes to any router or service.
+
+- **Step 2 bypass (`get_workspace_member`):** Returns a synthetic `WorkspaceMember`
+  object constructed in memory with `role='admin'`. The `workspace_members` table
+  is never queried. All downstream response serialization treats the Super Admin
+  as a workspace admin, ensuring full financial data visibility and no Viewer
+  data isolation restrictions.
+
+- **Step 3 bypass (`require_role`):** The inner `_require_role` function injects
+  `current_user` via `Depends(get_current_user)` in addition to `member`. When
+  `current_user.is_superadmin is True`, the function returns `member` immediately
+  without evaluating `member.role` against the required roles list.
+
+- **Super Admin-only endpoints (`get_superadmin_user`):** A dedicated dependency
+  that raises `403 FORBIDDEN` for any user where `is_superadmin is False`. Used
+  on platform-operator endpoints (to be added in the post-Phase 2 UI pass).
+  Current MVP has no endpoints using this dependency — it is added now to
+  establish the pattern cleanly.
+
+**What Super Admin does NOT change:**
+- JWT structure and validation — unchanged
+- Token expiry — unchanged
+- Google OAuth flow — unchanged
+- Password reset flow — unchanged
+- The `UserPublic` schema now includes `is_superadmin: bool` so the frontend
+  can read the flag from `GET /users/me` and gate future UI elements
 
 ### 6.6 Business Logic Services
 
@@ -344,7 +376,7 @@ Routers: validate input, call one service function, return result. No business l
 ---
 
 #### `auth_service.py`
-- `register(email, password, name)` → creates user + default workspace; returns tokens
+- `register(email, password, name)` → creates user + default workspace; returns tokens. `is_superadmin` is always set to `FALSE` on new user creation regardless of input. The field is not present in `SignupRequest` schema.
 - `login(email, password)` → verifies credentials; returns tokens
 - `refresh_tokens(refresh_token)` → verifies refresh token; returns new access token
 - `initiate_password_reset(email)` → generates secure token, stores with 1h expiry, calls `email.py`
@@ -610,7 +642,11 @@ Critical cases (original + new):
 - **`get_weekly_report` — Member sees only own row** (NEW)
 - **`get_weekly_report` — Viewer financial fields absent** (NEW)
 - **`get_weekly_report` — zero-hour days included with entry_count=0** (NEW)
-- **`get_weekly_report` — span > 31 days returns 400** (NEW)
+- **`get_workspace_member` — Super Admin returns synthetic member with role='admin' without DB query** (NEW v1.3)
+- **`require_role` — Super Admin bypasses all role checks unconditionally** (NEW v1.3)
+- **`get_superadmin_user` — non-super-admin user returns 403 FORBIDDEN** (NEW v1.3)
+- **`register` — newly created user always has `is_superadmin=False`** (NEW v1.3)
+- **Super Admin accesses workspace endpoint without membership — 200 success** (NEW v1.3)
 
 **Integration tests** (`tests/integration/`):
 Real test DB, full HTTP flows via `httpx.AsyncClient`.
