@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { ThemeToggle } from "@/components/ThemeToggle"
 
 export function LandingFooter() {
@@ -9,13 +10,13 @@ export function LandingFooter() {
       <div className="container mx-auto px-4 md:px-6">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
           <div className="col-span-2 md:col-span-1 space-y-4">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-brand-orange">
-                <span className="text-white font-bold text-xs font-mono">Y</span>
-              </div>
-              <span className="text-lg font-bold tracking-tight text-white">
-                Yusi<span className="text-brand-orange">Time</span>
-              </span>
+            <Link href="/" className="flex items-center">
+              <Image 
+                src="/logo-dark.svg" 
+                alt="Yusi Time" 
+                width={120} 
+                height={32} 
+              />
             </Link>
             <p className="text-sm">
               The time tracker that doesn&apos;t feel like a time tracker.

@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Loader2 } from "lucide-react"
 import Link from "next/link"
+import Image from "next/image"
 import { useState } from "react"
 
 function PasswordStrengthBar({ password }: { password: string }) {
@@ -58,8 +59,9 @@ export default function SignupPage() {
   return (
     <div className="bg-card border border-border rounded-xl shadow-sm p-8 space-y-6">
       <div className="text-center space-y-1">
-        <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-brand-orange mb-3">
-          <span className="text-white font-bold text-lg font-mono">Y</span>
+        <div className="flex justify-center mb-6">
+          <Image src="/logo-light.svg" alt="Yusi Time" width={120} height={32} className="dark:hidden" />
+          <Image src="/logo-dark.svg" alt="Yusi Time" width={120} height={32} className="hidden dark:block" />
         </div>
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
           Create your account
