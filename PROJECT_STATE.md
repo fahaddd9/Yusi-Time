@@ -1,7 +1,7 @@
 # Yusi Time — Project State
-**Last Updated:** 2026-05-31 — Phase 1.5 Completed
-**Current Phase:** Phase 2 — Workspace & Members — ⬜ Not Started
-**Last Session Summary:** Phase 1.5 (Super Admin Backend) fully implemented and verified. 59 tests passing, 83.75% coverage, ruff clean.
+**Last Updated:** 2026-06-01 — Phase 2 Completed
+**Current Phase:** Phase 3 — Projects, Tasks, Clients, Tags — ⬜ Not Started
+**Last Session Summary:** Phase 2 (Workspace & Members) fully implemented and verified. 101 tests passing, 85.85% coverage, frontend settings UI complete.
 
 ---
 
@@ -12,7 +12,7 @@
 | 0 | Setup & Infrastructure | ✅ Completed | 2026-05-29 |
 | 1 | Authentication | ✅ Completed | 2026-05-31 |
 | 1.5 | Super Admin Backend (API-only) | ✅ Completed | 2026-05-31 |
-| 2 | Workspace & Members | ⬜ Not Started | — |
+| 2 | Workspace & Members | ✅ Completed | 2026-06-01 |
 | 3 | Projects, Tasks, Clients, Tags | ⬜ Not Started | — |
 | 4 | Time Tracking Core | ⬜ Not Started | — |
 | 5 | Continue, Duplicate & Draft | ⬜ Not Started | — |
@@ -27,20 +27,19 @@
 
 ## Current Phase Detail
 
-### Phase 1.5 — Super Admin Backend (API-only) — ✅ Completed
+### Phase 2 — Workspace & Members — ✅ Completed
 
 #### Steps Completed
-- [x] Step 1.5.1 — `models/user.py` — `is_superadmin` column added (Boolean, NOT NULL, server_default=FALSE)
-- [x] Step 1.5.2 — `schemas/user.py` — `is_superadmin: bool` added to `UserPublic`
-- [x] Step 1.5.2b — `schemas/auth.py` — `is_superadmin: bool` added to `UserEmbedded` (signup/login responses)
-- [x] Step 1.5.3 — `dependencies.py` — Full Super Admin bypass architecture implemented:
-  - `_make_synthetic_member()` — builds WorkspaceMember(role='admin') via `__dict__` injection
-  - `get_workspace_member()` — short-circuits DB query for Super Admins
-  - `require_role()` — injects `current_user` as second dep; bypasses role check for Super Admins
-  - `get_superadmin_user()` — new dep for future Super Admin-only endpoints (Phase 7.5)
-- [x] Step 1.5.4 — Alembic migration `20260531_1500_add_is_superadmin_to_users.py` — hand-written targeted migration. Applied and verified reversible (downgrade/upgrade cycle passes).
-- [x] Step 1.5.5 — `seed_superadmin.py` — operator-only script created. Super Admin account `superadmin@yusitime.com` seeded in dev DB (ID: f4bffe1a-f608-4902-9538-12585db91166).
-- [x] Step 1.5.6 — Unit and integration tests written and passing.
+- [x] Step 2.1 — Backend Models: Created `Workspace` (updated), `WorkspaceMember` (updated), `Invite`, `AuditLog`, `Notification` models. Generated hand-written migration.
+- [x] Step 2.2 — Backend Schemas: Defined validation schemas for all models including `WorkspaceDetailViewer` for financial privacy.
+- [x] Step 2.3 — Services: Developed `workspace_service`, `member_service`, `invite_service` (with atomic transactions), `user_service`, and `notification_service`.
+- [x] Step 2.4 — Routers: Implemented APIs for `/workspaces`, `/workspaces/{id}/members`, `/workspaces/{id}/invites`, `/invites/{token}` (public), `/users/me`.
+- [x] Step 2.5 — Backend Tests: Built unit and integration tests confirming proper role-based access, financial privacy, invite creation/acceptance, and atomic behaviors.
+- [x] Step 2.6 — Frontend Stores: Implemented Zustand global stores (`useWorkspaceStore`, `useUIStore`) and a singleton `queryClient` to prevent cache bleed between workspaces.
+- [x] Step 2.7 — API + Hooks Layer: Created typed settings API and custom TanStack Query hooks covering all Phase 2 endpoints.
+- [x] Step 2.8 — App Layout Shell: Built the authenticated app layout featuring the global `Sidebar`, `WorkspaceSwitcher`, user profile fetching, and token refresh handling.
+- [x] Step 2.9 — Settings Pages: Developed Workspace settings (H1-H4), Members settings (H4), and Profile settings with full role-based feature gating.
+- [x] Step 2.10 — Invite Flow: Implemented the public invite acceptance page (`/join/[token]`) with intelligent redirection for unauthenticated users.
 
 #### Steps In Progress
 *(None)*
@@ -49,31 +48,24 @@
 *(None)*
 
 #### Decisions Made
-- `is_superadmin` is a boolean flag on the `users` table — not a workspace_role enum value (MASTER_PROMPT §11)
-- Synthetic member object always carries `role='admin'` for serialization; written via `__dict__` to bypass SQLAlchemy class-level descriptor protocol
-- `require_role()` injects `current_user` as second dependency to enable the Super Admin bypass check
-- `get_superadmin_user()` added now for pattern establishment; no endpoints use it yet
-- `UserEmbedded` in auth responses also includes `is_superadmin` so frontend can read it from signup/login
-- No frontend, no audit logging, no UI in this pass
-- Super Admin UI deferred to Phase 7.5 (after Phase 2 populated with real data)
-- Hand-written migration chosen over autogenerate to avoid dropping Phase 2+ tables not yet in models
+- Skipped Alembic autogenerate because it detected future tables as "removed" (Phase 1 DB schema was already complete for the whole app).
+- Created a singleton `queryClient` to allow the `useWorkspaceStore` to cleanly clear all caches (`queryClient.clear()`) on workspace switch.
+- Notification model renamed `metadata` column to `event_metadata` to avoid conflicts with SQLAlchemy's internal `DeclarativeBase.metadata`.
+- The invite acceptance flow intelligently routes users through login/signup if they don't have an active token, preserving the invite token in the URL.
 
 #### Issues / Bugs Discovered and Resolved
-- `_make_synthetic_member` initial attempt used `object.__setattr__()` which still triggers SQLAlchemy class descriptors → Fixed by writing directly to `synthetic.__dict__`
-- `User.__new__(User)` in tests failed due to missing `_sa_instance_state` → Replaced with `MagicMock(spec=User)` for unit tests and real DB-inserted objects for integration tests
-- `UserEmbedded` was missing `is_superadmin` → Added to propagate flag through signup/login HTTP responses
-- `tests/unit/` and `tests/integration/` both had `test_superadmin.py` causing pytest module collision → Fixed by adding `__init__.py` to all test subdirectories
-- Autogenerated Alembic migration would have dropped all Phase 2+ DB tables → Deleted and replaced with hand-written targeted migration
+- SQLAlchemy reserved keyword collision on `Notification.metadata` → renamed to `event_metadata`.
+- Two integration tests encountered datetime fixture drift → resolved by using `freezegun` / standardizing test fixture times.
+- Pytest threw `coroutine was never awaited` warnings in tests → resolved by correctly awaiting async DB insertions.
 
 #### Open Blockers
 *(None)*
 
 #### Test Results
-- `pytest tests/ -v`: **59 passed, 0 failed**
-- `pytest --cov=app --cov-fail-under=80`: **83.75% coverage ✅**
-- `ruff check app/ tests/`: **All checks passed ✅**
+- `pytest tests/ -v`: **101 passed, 0 failed**
+- `pytest --cov=app --cov-fail-under=80`: **85.85% coverage ✅**
 
-#### Phase 1.5 Completion Status
+#### Phase 2 Completion Status
 100% complete. All tests passing. All checklist items verified.
 Human supervisor approval received: Pending
 

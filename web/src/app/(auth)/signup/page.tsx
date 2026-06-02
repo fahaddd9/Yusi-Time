@@ -44,17 +44,22 @@ function PasswordStrengthBar({ password }: { password: string }) {
   )
 }
 
-export default function SignupPage() {
+import { useSearchParams } from "next/navigation"
+import React from "react"
+
+function SignupContent() {
   const [password, setPassword] = useState("")
+  const searchParams = useSearchParams()
+  const redirectUrl = searchParams.get("redirect")
 
   const {
     register,
     handleSubmit,
     setError,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<SignupInput>({ resolver: zodResolver(signupSchema) })
 
-  const signup = useSignup(setError)
+  const signup = useSignup(setError, redirectUrl)
 
   return (
     <div className="bg-card border border-border rounded-xl shadow-sm p-8 space-y-6">
@@ -135,10 +140,22 @@ export default function SignupPage() {
 
       <p className="text-center text-sm text-muted-foreground">
         Already have an account?{" "}
-        <Link href="/login" className="text-brand-orange hover:text-brand-orange-hover font-medium transition-colors">
+        <Link href={redirectUrl ? `/login?redirect=${encodeURIComponent(redirectUrl)}` : "/login"} className="text-brand-orange hover:text-brand-orange-hover font-medium transition-colors">
           Sign in
         </Link>
       </p>
     </div>
+  )
+}
+
+export default function SignupPage() {
+  return (
+    <React.Suspense fallback={
+      <div className="bg-card border border-border rounded-xl shadow-sm p-8 h-[600px] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    }>
+      <SignupContent />
+    </React.Suspense>
   )
 }

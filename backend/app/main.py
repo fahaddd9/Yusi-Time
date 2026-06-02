@@ -3,6 +3,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.logging import setup_logging, RequestLoggingMiddleware
 from app.core.exceptions import setup_exception_handlers
 from app.routers.auth import router as auth_router
+from app.routers.users import router as users_router
+from app.routers.workspaces import router as workspaces_router
+from app.routers.members import router as members_router
+from app.routers.invites import workspace_invites_router, public_invites_router
 
 setup_logging()
 
@@ -19,7 +23,13 @@ app.add_middleware(RequestLoggingMiddleware)
 
 setup_exception_handlers(app)
 
+# ── Routers ────────────────────────────────────────────────────────────────────
 app.include_router(auth_router, prefix="/api/v1")
+app.include_router(users_router, prefix="/api/v1")
+app.include_router(workspaces_router, prefix="/api/v1")
+app.include_router(members_router, prefix="/api/v1")
+app.include_router(workspace_invites_router, prefix="/api/v1")
+app.include_router(public_invites_router, prefix="/api/v1")
 
 
 @app.get("/health")

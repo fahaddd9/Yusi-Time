@@ -6,10 +6,16 @@ from app.models.user import User
 from app.models.password_reset_token import PasswordResetToken
 from app.models.workspace import Workspace
 from app.models.workspace_member import WorkspaceMember
+from app.models.invite import Invite
+from app.models.audit_log import AuditLog
+from app.models.notification import Notification
 
 __all__ = [
     "User",
     "PasswordResetToken",
     "Workspace",
     "WorkspaceMember",
+    "Invite",
+    "AuditLog",
+    "Notification",
 ]

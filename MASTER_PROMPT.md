@@ -61,9 +61,9 @@ When two documents conflict on the same topic, the higher-ranked document wins.
 
 | Priority | Document | File Location | Authority Scope |
 |----------|----------|--------------|-----------------|
-| 1 | **PRD v1.3 (Final)** | `docs/PRD_v1_3_Final.md` | WHAT to build — features, roles, business rules, acceptance criteria, user stories |
-| 2 | **DB Schema v2.2 + API Spec v1.2** | `docs/DB_Schema_v2_1_Changelog.md` · `docs/API_Spec_v1_1_Final.md` | Exact table DDL, field types, constraints, all 76 endpoint contracts. v2.2 adds `is_superadmin` to `users` and documents Super Admin bypass architecture. |
-| 3 | **TRD v1.2 (Final)** | `docs/TRD_v1_2_Final.md` | HOW to build — stack, architecture, folder structures, service signatures, security |
+| 1 | **PRD v1.4 (Final — Super Admin Added)** | `docs/PRD_v1_3_Final.md` | WHAT to build — features, roles, business rules, acceptance criteria, user stories |
+| 2 | **DB Schema v2.2 + API Spec v1.1** | `docs/DB_Schema_v2_1_Changelog.md (contains v2.1 and v2.2 changes)` · `docs/API_Spec_v1_1_Final.md` | Exact table DDL, field types, constraints, all 76 endpoint contracts. v2.2 adds `is_superadmin` to `users` and documents Super Admin bypass architecture. |
+| 3 | **TRD v1.3 (Final — Super Admin Backend)** | `docs/TRD_v1_2_Final.md` | HOW to build — stack, architecture, folder structures, service signatures, security |
 | 4 | **UI/UX Blueprint v2.0** | `docs/UI_UX_BLUEPRINT_v2.md` | Screen-by-screen layout, component states, brand color tokens, interaction patterns |
 | 5 | **FRONTEND_SKILL.md** | `FRONTEND_SKILL.md` (root) | Design philosophy, CSS variable system, Tailwind config, component code standards |
 | 6 | **Implementation Plan v1.0** | `docs/IMPLEMENTATION_PLAN.md` | Phase breakdown, step-by-step task order, per-phase testing checklists |
@@ -531,14 +531,14 @@ and `docs/UI_UX_BLUEPRINT_v2.md`. When there is any conflict, those documents wi
 
 ### Brand Colors (From Logo)
 ```
-Navy   #1E2D4B  → --brand-navy   → Sidebar bg, page headings, primary text (light mode)
-Orange #F06900  → --brand-orange → All primary CTAs, active states, running timer, focus rings
+Navy   #252F50  → --brand-navy   → Sidebar bg, page headings, primary text (light mode)
+Orange #FE6900  → --brand-orange → All primary CTAs, active states, running timer, focus rings
 ```
 
 ### Color Application Rules (Non-Negotiable)
 ```
 PRIMARY BUTTON:   bg-brand-orange hover:bg-brand-orange-hover text-white
-ACTIVE NAV ITEM:  bg-brand-orange/12 text-white border-l-2 border-brand-orange
+ACTIVE NAV ITEM:  bg-primary/10 text-white font-medium border-l-[2.5px] border-primary pl-[10px]
 ACTIVE TAB:       text-brand-orange border-b-2 border-brand-orange
 FOCUS RING:       focus-visible:ring-2 focus-visible:ring-brand-orange/40
 INPUT FOCUS:      focus:border-brand-orange focus:ring-brand-orange/20
@@ -551,7 +551,7 @@ MONEY VALUES:     font-mono text-sm text-success
 ### Forbidden Color Patterns
 ```
 ❌ bg-blue-600, text-blue-600, border-blue-500 (use brand-orange)
-❌ bg-[#1E2D4B], text-[#F06900] (use CSS variable tokens)
+❌ bg-[#252F50], text-[#FE6900] (use CSS variable tokens)
 ❌ dark: hardcoded colors without semantic token backing
 ❌ box-shadow on cards or sidebar (use border only)
 ❌ rounded-full badges (use rounded-md)
@@ -1124,8 +1124,8 @@ must be verified:
 
 ### Functional Completeness
 - [ ] All 76 API endpoints implemented and tested (API Spec v1.1 Appendix B)
-- [ ] All 21 screens from UI/UX Blueprint v2.0 implemented
-- [ ] All 8 phases completed and approved
+- [ ] All 26 screens from UI/UX Blueprint v2.1 implemented
+- [ ] All 11 phases completed and approved (0, 1, 1.5, 2, 3, 4, 5, 6, 7, 7.5, 8)
 - [ ] All 12 user stories from PRD v1.3 §6 pass on staging
 
 ### Data Integrity
@@ -1163,8 +1163,8 @@ must be verified:
 ### Design
 - [ ] All 21 screens verified in both light and dark mode
 - [ ] All time/money values use DM Mono (font-mono)
-- [ ] All primary CTAs use brand-orange (#F06900)
-- [ ] Sidebar uses brand-navy (#1E2D4B)
+- [ ] All primary CTAs use brand-orange (#FE6900)
+- [ ] Sidebar uses brand-navy (#252F50)
 - [ ] No raw hex colors in any component file
 - [ ] No blue action colors (only brand-orange and brand-navy)
 - [ ] All interactive elements have visible focus rings
@@ -1174,4 +1174,4 @@ must be verified:
 ---
 
 *End of MASTER_PROMPT.md — Version 1.0*
-*Aligned with: PRD v1.3 · TRD v1.2 · DB Schema v2.1 · API Spec v1.1 · UI/UX Blueprint v2.0 · FRONTEND_SKILL.md · AGENT.md v1.1 · Implementation Plan v1.0*
+*Aligned with: PRD v1.4 · TRD v1.3 · DB Schema v2.1 · API Spec v1.1 · UI/UX Blueprint v2.0 · FRONTEND_SKILL.md · AGENT.md v1.1 · Implementation Plan v1.0*

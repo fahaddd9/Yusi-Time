@@ -1,21 +1,26 @@
 "use client"
+import { useEffect } from "react"
 
 import { useQuery, useMutation } from "@tanstack/react-query"
 import { apiClient } from "@/lib/api-client"
+import { tokenStore } from "@/lib/token-store"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { Loader2, AlertCircle, CheckCircle2 } from "lucide-react"
 import Link from "next/link"
 import { ThemeToggle } from "@/components/ThemeToggle"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 
 export default function JoinWorkspacePage({ params }: { params: { token: string } }) {
   const router = useRouter()
   const { token } = params
 
+  const isLoggedIn = !!tokenStore.getAccessToken()
+
   const { data, isLoading, error, isError } = useQuery({
     queryKey: ["invite", token],
-    queryFn: () => apiClient.get(`/invites/${token}`).then(res => res.data),
+    queryFn: () => apiClient.get(`/invites/${token}`).then((res) => res.data),
     retry: false,
   })
 
@@ -23,14 +28,38 @@ export default function JoinWorkspacePage({ params }: { params: { token: string 
   const acceptInvite = useMutation({
     mutationFn: () => apiClient.post(`/invites/${token}/accept`),
     onSuccess: () => {
-      // Refresh user/workspaces on next load, then go to dashboard
+      // Go to dashboard. AppLayout will refresh user/workspaces automatically.
       router.push("/dashboard")
     },
+    onError: (error: any) => {
+      if (error.response?.status === 401) {
+        // Just in case token is invalid
+        router.push(`/login?redirect=/join/${token}`)
+      } else if (error.response?.data?.code === 'ALREADY_MEMBER') {
+        router.push("/dashboard")
+      } else {
+        const msg = error.response?.data?.detail || "Failed to accept invite"
+        toast.error(msg)
+      }
+    }
   })
+
+  // ... inside component ...
+  useEffect(() => {
+    if (!isLoggedIn) {
+      router.push(`/login?redirect=/join/${token}`)
+    }
+  }, [isLoggedIn, router, token])
 
   let content
 
-  if (isLoading) {
+  if (!isLoggedIn) {
+    content = (
+      <div className="flex justify-center items-center h-40">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    )
+  } else if (isLoading) {
     content = (
       <div className="flex justify-center items-center h-40">
         <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
@@ -57,14 +86,14 @@ export default function JoinWorkspacePage({ params }: { params: { token: string 
           </h1>
           <p className="text-sm text-muted-foreground">{errDetail}</p>
         </div>
-        <Link href="/login" className={cn(buttonVariants({ variant: "default" }), "w-full bg-brand-navy hover:bg-brand-navy/90 text-white h-10 mt-6 flex items-center justify-center")}>
-          Go to login
+        <Link href="/dashboard" className={cn(buttonVariants({ variant: "default" }), "w-full bg-brand-navy hover:bg-brand-navy/90 text-white h-10 mt-6 flex items-center justify-center")}>
+          Go to Dashboard
         </Link>
       </div>
     )
   } else {
     // Valid invite
-    const invite = data?.data
+    const invite = data
     content = (
       <div className="text-center space-y-6">
         <div className="flex justify-center mb-4">
@@ -85,14 +114,11 @@ export default function JoinWorkspacePage({ params }: { params: { token: string 
           <Button
             onClick={() => acceptInvite.mutate()}
             disabled={acceptInvite.isPending}
-            className="w-full bg-brand-orange hover:bg-brand-orange-hover text-white font-medium h-10"
+            className="w-full bg-primary hover:bg-primary/90 text-white shadow-[0_0_15px_rgba(254,105,0,0.3)] font-medium h-10"
           >
-            {acceptInvite.isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+            {acceptInvite.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
             Accept Invitation
           </Button>
-          <p className="text-xs text-muted-foreground">
-            If you don&apos;t have an account yet, you will be prompted to create one.
-          </p>
         </div>
       </div>
     )

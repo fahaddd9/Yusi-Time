@@ -9,13 +9,13 @@ import type { UseFormSetError } from "react-hook-form"
 
 // ── useLogin ───────────────────────────────────────────────────────────────
 
-export function useLogin(setError?: UseFormSetError<{ email: string; password: string }>) {
+export function useLogin(setError?: UseFormSetError<{ email: string; password: string }>, redirectUrl?: string | null) {
   const router = useRouter()
   return useMutation({
     mutationFn: authApi.login,
     onSuccess: (res) => {
       tokenStore.setAccessToken(res.data.access_token)
-      router.push("/dashboard")
+      router.push(redirectUrl || "/dashboard")
     },
     onError: (err: any) => {
       const code = err?.response?.data?.code
@@ -31,13 +31,13 @@ export function useLogin(setError?: UseFormSetError<{ email: string; password: s
 
 // ── useSignup ──────────────────────────────────────────────────────────────
 
-export function useSignup(setError?: UseFormSetError<{ email: string; password: string; full_name: string }>) {
+export function useSignup(setError?: UseFormSetError<{ email: string; password: string; full_name: string }>, redirectUrl?: string | null) {
   const router = useRouter()
   return useMutation({
     mutationFn: authApi.signup,
     onSuccess: (res) => {
       tokenStore.setAccessToken(res.data.access_token)
-      router.push("/dashboard")
+      router.push(redirectUrl || "/dashboard")
     },
     onError: (err: any) => {
       const code = err?.response?.data?.code

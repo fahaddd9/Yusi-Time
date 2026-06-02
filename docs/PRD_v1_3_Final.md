@@ -3,6 +3,7 @@
 **Date:** 2026-05-26
 **Status:** Finalized ✅
 **Author:** Yusi Time Project Team
+**Current Version: 1.4** (file named v1.3 for historical continuity)
 
 ---
 
@@ -487,7 +488,7 @@ visible to any workspace role (Admin, Manager, Member, or Viewer).
 
 ### Continue Entry Rules (NEW — v1.3)
 - Continue is permitted on `draft` and `approved` entries.
-- Continue is **not permitted** on `pending` entries — returns `403 FORBIDDEN`.
+- Continue is **not permitted** on `pending` entries — returns `400 CANNOT_CONTINUE_PENDING`.
 - Continue creates a brand-new time entry. The source entry is unchanged.
 - A fresh rate snapshot is taken for the new entry at creation time.
 - If a timer is already running when Continue is called without `force=true`, returns `409 TIMER_ALREADY_RUNNING`.
@@ -697,7 +698,7 @@ visible to any workspace role (Admin, Manager, Member, or Viewer).
 | Viewer data restriction | Viewers see no financial data anywhere in UI or API responses; financial fields are not rendered, not merely hidden |
 | Idle detection | All three options functional; no auto-dismiss; timer state correct after each choice; cross-device independence confirmed |
 | Invite link single-use | Link invalidated immediately after successful join; second use returns error |
-| Continue entry (NEW) | Continue starts new timer with same project/task/description/billable/tags; fresh rate snapshot taken; pending entries return 403; timer conflict handled via force flag |
+| Continue entry (NEW) | Continue starts new timer with same project/task/description/billable/tags; fresh rate snapshot taken; pending entries return 400 CANNOT_CONTINUE_PENDING; timer conflict handled via force flag |
 | Duplicate entry (NEW) | Duplicate creates draft entry with same metadata; start_time = today midnight; rounding applied; pending entries return 403; rounding toast shown |
 | Description draft auto-save (NEW) | Draft persists across page refresh; draft cleared on successful timer start/stop; draft not sent to server; draft scoped per user per workspace |
 | Weekly Report (NEW) | Grid shows all members × days for selected range (Admin/Manager); Members/Viewers see own row only; cell popover shows individual entries; CSV export available; financial data absent for Viewers |

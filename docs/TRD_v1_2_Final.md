@@ -968,7 +968,7 @@ Framer Motion — all durations **0.2–0.3s**. `MotionConfig reducedMotion="use
 | Element | Animation |
 |---------|-----------|
 | Page transitions | `opacity` fade 0→1, 0.18s |
-| Timer running | Subtle scale pulse 1→1.05→1, 1.8s loop |
+| Timer running | Opacity pulse 1→0.4→1, 2s loop (applied to the running indicator dot via animate-timer-pulse) |
 | List items | `AnimatePresence` + y-slide 4px + `opacity`, stagger 0.04s (max 5 items) |
 | Modals | `scale` 0.97→1 + `opacity`, 0.20s |
 | Toast (sonner) | Slide up y:12→0 + `opacity`, 0.22s |
@@ -995,7 +995,7 @@ Three components required:
   --background: 0 0% 99%;         /* page bg */
   --surface: 0 0% 100%;           /* card bg */
   --surface-raised: 0 0% 97%;     /* hover surface */
-  --primary: 217 91% 60%;         /* #3B82F6 */
+  --primary: 24 100% 50%;         /* #FE6900 */
   --success: 142 71% 45%;         /* #22C55E */
   --warning: 38 92% 50%;          /* #F59E0B */
   --destructive: 0 84% 60%;       /* #EF4444 */
@@ -1007,7 +1007,7 @@ Three components required:
 .dark {
   --background: 240 5% 6%;        /* #0F0F10 */
   --surface: 240 4% 9%;           /* #16161A */
-  --primary: 217 91% 60%;         /* same blue */
+  --primary: 24 100% 55%;         /* #FE6B00 brighter in dark */
   /* ... full dark system in FRONTEND_SKILL.md §1.3 */
 }
 ```
@@ -1027,7 +1027,7 @@ color tokens (see FRONTEND_SKILL.md §1.4).
 - Named exports for all non-page components
 
 **Responsiveness:**
-- Minimum: 320px screen width
+- Minimum: 375px screen width
 - Breakpoints: sm (640px), md (768px), lg (1024px), xl (1280px)
 - Sidebar: always visible lg+, icon-only md, sheet overlay sm
 - TimerBar: full md+, compressed sm (project name + timer + stop only)

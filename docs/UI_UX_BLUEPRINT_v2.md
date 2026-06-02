@@ -22,8 +22,8 @@
 
 ### Logo Analysis
 The Yusi Time logo uses two primary brand colors:
-- **Navy Blue** `#1E2D4B` — "YUSI" wordmark, primary dark color
-- **Orange** `#F06900` — "TIME" wordmark, rounded-rect border, stopwatch icon
+- **Navy Blue** `#252F50` — "YUSI" wordmark, primary dark color
+- **Orange** `#FE6900` — "TIME" wordmark, rounded-rect border, stopwatch icon
 
 These two colors define the entire design language. Everything flows from them.
 
@@ -34,9 +34,9 @@ These two colors define the entire design language. Everything flows from them.
 
 :root {
   /* ── BRAND ─────────────────────────────────── */
-  --brand-navy:        #1E2D4B;   /* Logo navy — primary dark */
-  --brand-orange:      #F06900;   /* Logo orange — primary accent */
-  --brand-orange-hover:#D95E00;   /* Orange darkened 10% for hover */
+  --brand-navy:        #252F50;   /* Logo navy — primary dark */
+  --brand-orange:      #FE6900;   /* Logo orange — primary accent */
+  --brand-orange-hover:#E55E00;   /* Orange darkened 10% for hover */
   --brand-orange-light:#FFF0E6;   /* Orange 6% tint for backgrounds */
   --brand-navy-light:  #EEF1F7;   /* Navy 6% tint for backgrounds */
 
@@ -51,22 +51,22 @@ These two colors define the entire design language. Everything flows from them.
   --popover-foreground: 220 47% 18%;
 
   /* Sidebar uses brand navy */
-  --sidebar-background: 220 47% 18%;     /* #1E2D4B brand navy */
+  --sidebar-background: 220 47% 18%;     /* #252F50 brand navy */
   --sidebar-foreground: 220 20% 72%;     /* muted blue-gray */
-  --sidebar-primary:    24 100% 47%;     /* #F06900 orange */
+  --sidebar-primary:    24 100% 47%;     /* #FE6900 orange */
   --sidebar-active-bg:  rgba(240,105,0,0.12);
-  --sidebar-active-border: #F06900;
+  --sidebar-active-border: #FE6900;
   --sidebar-accent:     220 40% 22%;     /* slightly lighter navy */
   --sidebar-border:     rgba(255,255,255,0.06);
 
   /* Brand primary = orange */
-  --primary:            24 100% 47%;     /* #F06900 */
+  --primary:            24 100% 47%;     /* #FE6900 */
   --primary-foreground: 0 0% 100%;       /* white on orange */
-  --primary-hover:      24 100% 42%;     /* #D95E00 */
+  --primary-hover:      24 100% 42%;     /* #E55E00 */
   --primary-muted:      24 100% 95%;     /* #FFF0E6 */
 
   /* Secondary = navy */
-  --secondary:          220 47% 18%;     /* #1E2D4B */
+  --secondary:          220 47% 18%;     /* #252F50 */
   --secondary-foreground: 0 0% 100%;
 
   /* Semantic */
@@ -87,7 +87,7 @@ These two colors define the entire design language. Everything flows from them.
   --status-draft-muted: 220 14% 93%;
 
   /* Text */
-  --foreground:         220 47% 18%;     /* #1E2D4B — brand navy as primary text */
+  --foreground:         220 47% 18%;     /* #252F50 — brand navy as primary text */
   --foreground-2:       220 15% 35%;     /* secondary text */
   --foreground-3:       220 9% 52%;      /* muted text */
   --foreground-4:       220 9% 68%;      /* placeholder */
@@ -175,10 +175,10 @@ These two colors define the entire design language. Everything flows from them.
 // tailwind.config.ts additions
 colors: {
   brand: {
-    navy:         '#1E2D4B',
+    navy:         '#252F50',
     'navy-light': '#EEF1F7',
-    orange:       '#F06900',
-    'orange-hover': '#D95E00',
+    orange:       '#FE6900',
+    'orange-hover': '#E55E00',
     'orange-light': '#FFF0E6',
   },
   primary: {
@@ -194,7 +194,7 @@ colors: {
 ### Design Language Rules Derived from Brand Colors
 
 ```
-ORANGE (#F06900) is the ACTION color:
+ORANGE (#FE6900) is the ACTION color:
   → Primary CTA buttons
   → Active nav item indicator
   → Running timer display
@@ -203,7 +203,7 @@ ORANGE (#F06900) is the ACTION color:
   → Hover accents on key elements
   → Progress bar fills
 
-NAVY (#1E2D4B) is the STRUCTURE color:
+NAVY (#252F50) is the STRUCTURE color:
   → Sidebar background
   → Primary text color (light mode)
   → Page headings
@@ -386,7 +386,7 @@ Mobile (<md): hamburger Sheet menu showing all nav links + CTAs
 **File:** `features/landing/components/HeroSection.tsx`
 
 **Visual concept:** Split layout. Left = copy + CTAs. Right = animated app
-preview. Background: deep navy (`#1E2D4B`) with subtle grid pattern overlay
+preview. Background: deep navy (`#252F50`) with subtle grid pattern overlay
 (5% white opacity). Orange accent elements.
 
 ```
@@ -1621,7 +1621,7 @@ Same style as Dashboard stat cards:
 #### Step 4 — Bar chart (Recharts)
 ```
 HorizontalBarChart:
-  Billable bar fill: '#F06900' (brand-orange)
+  Billable bar fill: '#FE6900' (brand-orange)
   Non-billable bar fill: hsl(var(--muted))
   Tooltip: bg-surface border border-border rounded-lg shadow-lg
   Legend: orange square "Billable" + muted square "Non-billable"
@@ -2131,7 +2131,7 @@ className="bg-brand-navy" // or CSS var: bg-[hsl(var(--sidebar-background))]
 className="bg-blue-600 text-blue-600 border-blue-500"
 
 // ❌ Raw hex in className
-className="bg-[#1E2D4B] text-[#F06900]"    // use token classes
+className="bg-[#252F50] text-[#FE6900]"    // use token classes
 
 // ❌ Any type
 const x: any = ...
@@ -2231,7 +2231,7 @@ They are synchronized automatically by next-themes.
 A: `bg-brand-orange text-white` — consistent with all primary active indicators.
 
 **Q: Recharts chart colors — use brand-orange?**
-A: Yes. Billable bars: `#F06900`. Non-billable: `hsl(var(--muted))`.
+A: Yes. Billable bars: `#FE6900`. Non-billable: `hsl(var(--muted))`.
 Tooltip background: `hsl(var(--surface))` with `hsl(var(--border))` border.
 
 ---
@@ -2259,7 +2259,7 @@ The TRD is color-agnostic by design.
 Backend has zero awareness of colors.
 
 **DB Schema v2.1 — NO change needed.**
-`projects.color` column stores a hex string. `#F06900` is a valid entry.
+`projects.color` column stores a hex string. `#FE6900` is a valid entry.
 No constraint changes needed.
 
 **AGENT.md v1.1 — NO change needed.**
@@ -2275,7 +2275,7 @@ are unaffected. The update is isolated to one section of one file.
 *Screens: 20 + 1 Landing Page = 21 total screens*
 *Components: 9 modal/overlay + 8 shared = 17 components*
 *New features: Continue, Duplicate, Description Draft, Weekly Report, Dashboard Continue — all fully specified*
-*Brand: Navy #1E2D4B + Orange #F06900 applied consistently across all screens*
+*Brand: Navy #252F50 + Orange #FE6900 applied consistently across all screens*
 *Aligned to: PRD v1.4 · TRD v1.3 · DB Schema v2.2 · API Spec v1.2 · FRONTEND_SKILL.md*
 
 ---
@@ -2294,7 +2294,7 @@ from the main application. This is intentional — it prevents confusion
 between the platform-level view and a regular workspace view.
 PRIMARY SURFACE:    bg-zinc-950   (#09090B) — deeper than main app dark bg
 SECONDARY SURFACE:  bg-zinc-900   (#18181B) — cards and panels
-ACCENT COLOR:       #F06900       — same brand-orange (consistency)
+ACCENT COLOR:       #FE6900       — same brand-orange (consistency)
 DANGER COLOR:       #EF4444       — same destructive red
 TEXT PRIMARY:       #FAFAFA       — near-white
 TEXT MUTED:         #71717A       — zinc-500
@@ -2788,5 +2788,5 @@ export const superAdminKeys = {
 *Screens: 20 + 1 Landing Page + 5 Super Admin screens = 26 total screens*
 *Components: 9 modal/overlay + 8 shared + 3 Super Admin shell = 20 components*
 *New features (v2.1): Super Admin Dashboard — SA1 through SA9 fully specified*
-*Brand: Navy #1E2D4B + Orange #F06900 applied consistently. Super Admin uses Zinc palette with Orange accent.*
+*Brand: Navy #252F50 + Orange #FE6900 applied consistently. Super Admin uses Zinc palette with Orange accent.*
 *Aligned to: PRD v1.4 · TRD v1.3 · DB Schema v2.2 · API Spec v1.2 · FRONTEND_SKILL.md*

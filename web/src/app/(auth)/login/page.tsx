@@ -11,15 +11,21 @@ import { Loader2 } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 
-export default function LoginPage() {
+import { useSearchParams } from "next/navigation"
+import React, { Suspense } from "react"
+
+function LoginContent() {
+  const searchParams = useSearchParams()
+  const redirectUrl = searchParams.get("redirect")
+
   const {
     register,
     handleSubmit,
     setError,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<LoginInput>({ resolver: zodResolver(loginSchema) })
 
-  const login = useLogin(setError)
+  const login = useLogin(setError, redirectUrl)
 
   return (
     <div className="bg-card border border-border rounded-xl shadow-sm p-8 space-y-6">
@@ -111,10 +117,22 @@ export default function LoginPage() {
 
       <p className="text-center text-sm text-muted-foreground">
         Don&apos;t have an account?{" "}
-        <Link href="/signup" className="text-brand-orange hover:text-brand-orange-hover font-medium transition-colors">
+        <Link href={redirectUrl ? `/signup?redirect=${encodeURIComponent(redirectUrl)}` : "/signup"} className="text-brand-orange hover:text-brand-orange-hover font-medium transition-colors">
           Sign up free
         </Link>
       </p>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <React.Suspense fallback={
+      <div className="bg-card border border-border rounded-xl shadow-sm p-8 h-[500px] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    }>
+      <LoginContent />
+    </React.Suspense>
   )
 }
