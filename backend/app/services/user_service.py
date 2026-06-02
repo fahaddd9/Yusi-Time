@@ -18,7 +18,6 @@ delete_me guard:
   They must transfer admin or delete the workspace first.
 """
 
-import uuid as _uuid
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete as sa_delete, func
 from fastapi import HTTPException

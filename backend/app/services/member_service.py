@@ -19,7 +19,7 @@ Business rules:
 import uuid as _uuid
 from math import ceil
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, delete
+from sqlalchemy import select, func
 from fastapi import HTTPException
 
 from app.models.workspace_member import WorkspaceMember

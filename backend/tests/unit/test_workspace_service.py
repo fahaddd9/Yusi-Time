@@ -7,12 +7,11 @@ MagicMock return values, not real DB connections.
 
 import uuid
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 from datetime import datetime, timezone
 from fastapi import HTTPException
 
 from app.models.workspace import Workspace
-from app.models.workspace_member import WorkspaceMember
 from app.schemas.workspace import WorkspaceDetail, WorkspaceDetailViewer, WorkspaceUpdate
 
 
@@ -114,7 +113,7 @@ class TestUpdateWorkspace:
         mock_db.get = AsyncMock(return_value=ws)
 
         data = WorkspaceUpdate(name="New Name")
-        result = await update_workspace(mock_db, ws.id, data)
+        await update_workspace(mock_db, ws.id, data)
 
         assert ws.name == "New Name"
 

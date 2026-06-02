@@ -72,7 +72,7 @@ class TestCreateInvite:
         # We mock flush — the service adds the invite THEN flushes
         # Capture it from mock_db.add calls
         try:
-            result = await create_invite(mock_db, ws.id, data, created_by_user_id=uuid.uuid4())
+            await create_invite(mock_db, ws.id, data, created_by_user_id=uuid.uuid4())
         except Exception:
             pass  # model_validate may fail on real ORM object without session
 
@@ -196,7 +196,7 @@ class TestAcceptInvite:
         from app.services.invite_service import accept_invite
 
         valid = make_invite()
-        ws_id = valid.workspace_id
+        
         user_id = uuid.uuid4()
 
         mock_db = AsyncMock()

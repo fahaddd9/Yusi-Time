@@ -12,7 +12,6 @@ import pytest
 from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock
 from fastapi import HTTPException
-from sqlalchemy import select
 
 
 def make_member(workspace_id=None, user_id=None, role="member"):
@@ -93,7 +92,7 @@ class TestChangeRole:
         member_result.one_or_none = MagicMock(return_value=(member, user))
         mock_db.execute = AsyncMock(return_value=member_result)
 
-        result = await change_role(mock_db, ws_id, user_id, "manager", actor_id)
+        await change_role(mock_db, ws_id, user_id, "manager", actor_id)
         assert member.role == "manager"
         mock_db.add.assert_called()  # AuditLog added
         mock_db.flush.assert_awaited()
