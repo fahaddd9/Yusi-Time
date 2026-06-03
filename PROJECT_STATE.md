@@ -1,7 +1,7 @@
 # Yusi Time — Project State
-**Last Updated:** 2026-06-01 — Phase 2 Completed
-**Current Phase:** Phase 3 — Projects, Tasks, Clients, Tags — ⬜ Not Started
-**Last Session Summary:** Phase 2 (Workspace & Members) fully implemented and verified. 101 tests passing, 85.85% coverage, frontend settings UI complete.
+**Last Updated:** 2026-06-02 — Phase 3 Completed
+**Current Phase:** Phase 4 — Time Tracking Core — ⬜ Not Started
+**Last Session Summary:** Phase 3 (Projects, Tasks, Clients, Tags) fully implemented and verified. All backend endpoints, security logic, and frontend components (Projects List, Project Detail, Settings Pages) are complete.
 
 ---
 
@@ -13,7 +13,7 @@
 | 1 | Authentication | ✅ Completed | 2026-05-31 |
 | 1.5 | Super Admin Backend (API-only) | ✅ Completed | 2026-05-31 |
 | 2 | Workspace & Members | ✅ Completed | 2026-06-01 |
-| 3 | Projects, Tasks, Clients, Tags | ⬜ Not Started | — |
+| 3 | Projects, Tasks, Clients, Tags | ✅ Completed | 2026-06-02 |
 | 4 | Time Tracking Core | ⬜ Not Started | — |
 | 5 | Continue, Duplicate & Draft | ⬜ Not Started | — |
 | 6 | Approvals & Notifications | ⬜ Not Started | — |
@@ -27,36 +27,33 @@
 
 ## Current Phase Detail
 
-### Phase 2 — Workspace & Members — ✅ Completed
+### Phase 3 — Projects, Tasks, Clients, Tags — ✅ Completed
 
 #### Steps Completed
-- [x] Step 2.1 — Backend Models: Created `Workspace` (updated), `WorkspaceMember` (updated), `Invite`, `AuditLog`, `Notification` models. Generated hand-written migration.
-- [x] Step 2.2 — Backend Schemas: Defined validation schemas for all models including `WorkspaceDetailViewer` for financial privacy.
-- [x] Step 2.3 — Services: Developed `workspace_service`, `member_service`, `invite_service` (with atomic transactions), `user_service`, and `notification_service`.
-- [x] Step 2.4 — Routers: Implemented APIs for `/workspaces`, `/workspaces/{id}/members`, `/workspaces/{id}/invites`, `/invites/{token}` (public), `/users/me`.
-- [x] Step 2.5 — Backend Tests: Built unit and integration tests confirming proper role-based access, financial privacy, invite creation/acceptance, and atomic behaviors.
-- [x] Step 2.6 — Frontend Stores: Implemented Zustand global stores (`useWorkspaceStore`, `useUIStore`) and a singleton `queryClient` to prevent cache bleed between workspaces.
-- [x] Step 2.7 — API + Hooks Layer: Created typed settings API and custom TanStack Query hooks covering all Phase 2 endpoints.
-- [x] Step 2.8 — App Layout Shell: Built the authenticated app layout featuring the global `Sidebar`, `WorkspaceSwitcher`, user profile fetching, and token refresh handling.
-- [x] Step 2.9 — Settings Pages: Developed Workspace settings (H1-H4), Members settings (H4), and Profile settings with full role-based feature gating.
-- [x] Step 2.10 — Invite Flow: Implemented the public invite acceptance page (`/join/[token]`) with intelligent redirection for unauthenticated users.
-
-#### Steps In Progress
-*(None)*
-
-#### Steps Remaining
-*(None)*
+- [x] Step 3.1 — Backend Models: Created and verified SQLAlchemy models.
+- [x] Step 3.2 — Backend Schemas: Built Pydantic models with financial isolation logic for viewers.
+- [x] Step 3.3 — Client Service & Router: Full CRUD endpoints.
+- [x] Step 3.4 — Project Service & Router: Includes archiving and robust visibility control (`public` vs `private`).
+- [x] Step 3.5 — Task Service & Router: Handled assignee validation and fallback hourly rates.
+- [x] Step 3.6 — Tag Service & Router: Full CRUD endpoints.
+- [x] Step 3.7 — Phase 3 Tests: Automated tests maintaining 100% test pass rate and high coverage.
+- [x] Step 3.8 — Shared Components Library: Built UI components (`ColorPicker`, `ProjectTag`, `StatusBadge`).
+- [x] Step 3.9 — Projects API + Hooks: Integrated React Query with optimistic UI capabilities.
+- [x] Step 3.10 — Projects List Page: Implemented filterable grid and "Create Project" flow.
+- [x] Step 3.11 — Project Detail Page: Deep-dive view featuring nested tabs and integrated Task management.
+- [x] Step 3.12 — Clients + Tags Settings Pages: Built complete setting panels for workspace clients and tags management.
 
 #### Decisions Made
-- Skipped Alembic autogenerate because it detected future tables as "removed" (Phase 1 DB schema was already complete for the whole app).
-- Created a singleton `queryClient` to allow the `useWorkspaceStore` to cleanly clear all caches (`queryClient.clear()`) on workspace switch.
-- Notification model renamed `metadata` column to `event_metadata` to avoid conflicts with SQLAlchemy's internal `DeclarativeBase.metadata`.
-- The invite acceptance flow intelligently routes users through login/signup if they don't have an active token, preserving the invite token in the URL.
+- `ColorPicker` uses `render` prop explicitly for Base UI Popover triggers and gracefully handles nullish DB color values.
+- Used `useWorkspaceStore` globally to handle cache scopes and prevent cross-workspace data bleed in hooks.
 
 #### Issues / Bugs Discovered and Resolved
-- SQLAlchemy reserved keyword collision on `Notification.metadata` → renamed to `event_metadata`.
-- Two integration tests encountered datetime fixture drift → resolved by using `freezegun` / standardizing test fixture times.
-- Pytest threw `coroutine was never awaited` warnings in tests → resolved by correctly awaiting async DB insertions.
+- Fixed minor TypeScript mismatch in `ColorPicker` by modifying props to securely accept `string | null` from API DTOs.
+- Ensured `useWorkspace` correctly fetched the workspaceId globally, bypassing React-Router constraint complexities via Zustand.
+
+---
+
+### Phase 2 — Workspace & Members — ✅ Completed
 
 #### Open Blockers
 *(None)*

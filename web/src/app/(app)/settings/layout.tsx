@@ -12,12 +12,14 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Building2, Users, User, Shield } from 'lucide-react'
+import { Building2, Users, User, Shield, Briefcase, TagIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const settingsNav = [
   { href: '/settings/workspace', label: 'Workspace', icon: Building2 },
   { href: '/settings/members', label: 'Members', icon: Users },
+  { href: '/settings/clients', label: 'Clients', icon: Briefcase },
+  { href: '/settings/tags', label: 'Tags', icon: TagIcon },
   { href: '/settings/profile', label: 'Profile', icon: User },
 ]
 

@@ -7,6 +7,10 @@ from app.routers.users import router as users_router
 from app.routers.workspaces import router as workspaces_router
 from app.routers.members import router as members_router
 from app.routers.invites import workspace_invites_router, public_invites_router
+from app.routers.clients import router as clients_router
+from app.routers.projects import router as projects_router
+from app.routers.tasks import router as tasks_router
+from app.routers.tags import router as tags_router
 
 setup_logging()
 
@@ -30,6 +34,10 @@ app.include_router(workspaces_router, prefix="/api/v1")
 app.include_router(members_router, prefix="/api/v1")
 app.include_router(workspace_invites_router, prefix="/api/v1")
 app.include_router(public_invites_router, prefix="/api/v1")
+app.include_router(clients_router, prefix="/api/v1")
+app.include_router(projects_router, prefix="/api/v1")
+app.include_router(tasks_router, prefix="/api/v1")
+app.include_router(tags_router, prefix="/api/v1")
 
 
 @app.get("/health")

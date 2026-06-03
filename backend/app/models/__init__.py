@@ -10,6 +10,13 @@ from app.models.invite import Invite
 from app.models.audit_log import AuditLog
 from app.models.notification import Notification
 
+# Phase 3 Models
+from app.models.client import Client
+from app.models.project import Project
+from app.models.project_member import ProjectMember
+from app.models.task import Task
+from app.models.tag import Tag
+
 __all__ = [
     "User",
     "PasswordResetToken",
@@ -18,4 +25,9 @@ __all__ = [
     "Invite",
     "AuditLog",
     "Notification",
+    "Client",
+    "Project",
+    "ProjectMember",
+    "Task",
+    "Tag",
 ]
