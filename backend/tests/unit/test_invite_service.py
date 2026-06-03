@@ -199,6 +199,9 @@ class TestAcceptInvite:
         user_id = uuid.uuid4()
 
         mock_db = AsyncMock()
+        mock_user = MagicMock()
+        mock_user.email = valid.email
+        mock_db.get = AsyncMock(return_value=mock_user)
 
         # First execute: find invite
         invite_result = MagicMock()
@@ -223,6 +226,9 @@ class TestAcceptInvite:
         user_id = uuid.uuid4()
 
         mock_db = AsyncMock()
+        mock_user = MagicMock()
+        mock_user.email = valid.email
+        mock_db.get = AsyncMock(return_value=mock_user)
 
         # First execute: find invite
         invite_result = MagicMock()
