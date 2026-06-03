@@ -99,7 +99,6 @@ class TestCreateInvite:
         # by bypassing the schema with a manual call
         with pytest.raises(HTTPException) as exc:
             # Manually trigger service guard (Pydantic would normally catch this)
-            from app.services.invite_service import create_invite
             data = MagicMock()
             data.role = "admin"
             data.email = "admin@example.com"
