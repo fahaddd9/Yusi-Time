@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useCreateProject, useUpdateProject, useClients } from "@/features/projects/hooks"
 import { ColorPicker } from "@/components/ui/color-picker"
@@ -17,6 +18,7 @@ const schema = z.object({
   name: z.string().min(1, "Project name is required"),
   client_id: z.string().optional().nullable(),
   visibility: z.enum(["public", "private"]).default("public"),
+  default_billable: z.boolean().default(true),
   color: z.string().optional().nullable(),
   budget_hours: z.string().optional().nullable(),
 })
@@ -36,12 +38,13 @@ export function CreateProjectDialog({ open, onOpenChange, initialData }: Props) 
   const updateProject = useUpdateProject()
   const isEditing = !!initialData
 
-  const { register, handleSubmit, control, reset, formState: { errors } } = useForm<FormValues>({
+  const { register, handleSubmit, control, reset, setError, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
       name: "",
       client_id: null,
       visibility: "public",
+      default_billable: true,
       color: null,
       budget_hours: null,
     }
@@ -54,6 +57,7 @@ export function CreateProjectDialog({ open, onOpenChange, initialData }: Props) 
           name: initialData.name || "",
           client_id: initialData.client_id || null,
           visibility: initialData.visibility || "public",
+          default_billable: initialData.default_billable ?? true,
           color: initialData.color || null,
           budget_hours: initialData.budget_hours ? String(initialData.budget_hours) : null,
         })
@@ -62,6 +66,7 @@ export function CreateProjectDialog({ open, onOpenChange, initialData }: Props) 
           name: "",
           client_id: null,
           visibility: "public",
+          default_billable: true,
           color: null,
           budget_hours: null,
         })
@@ -83,7 +88,9 @@ export function CreateProjectDialog({ open, onOpenChange, initialData }: Props) 
           onOpenChange(false)
         },
         onError: (err: any) => {
-          toast.error(err.response?.data?.detail || "Failed to update project")
+          const detail = err.response?.data?.detail;
+          const msg = typeof detail === 'string' ? detail : detail?.detail || "Failed to update project";
+          toast.error(msg)
         }
       })
     } else {
@@ -94,7 +101,13 @@ export function CreateProjectDialog({ open, onOpenChange, initialData }: Props) 
           onOpenChange(false)
         },
         onError: (err: any) => {
-          toast.error(err.response?.data?.detail || "Failed to create project")
+          const detail = err.response?.data?.detail;
+          const msg = typeof detail === 'string' ? detail : detail?.detail || "Failed to create project";
+          if (err.response?.status === 409) {
+            setError("name", { type: "manual", message: msg })
+          } else {
+            toast.error(msg)
+          }
         }
       })
     }
@@ -174,6 +187,25 @@ export function CreateProjectDialog({ open, onOpenChange, initialData }: Props) 
             <div className="space-y-2 col-span-2">
               <Label htmlFor="budget_hours">Budget (Hours)</Label>
               <Input id="budget_hours" type="number" step="0.5" min="0" {...register("budget_hours")} placeholder="e.g. 50" />
+            </div>
+
+            <div className="flex flex-row items-center justify-between rounded-lg border border-border p-3 col-span-2 shadow-sm">
+              <div className="space-y-0.5">
+                <Label>Default Billable</Label>
+                <p className="text-[13px] text-muted-foreground">
+                  Should tasks in this project be billable by default?
+                </p>
+              </div>
+              <Controller
+                name="default_billable"
+                control={control}
+                render={({ field }) => (
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                )}
+              />
             </div>
           </div>
 

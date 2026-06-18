@@ -23,6 +23,7 @@ class ProjectUpdate(BaseModel):
     budget_hours: float | None = Field(None, gt=0)
     budget_amount_cents: int | None = Field(None, gt=0)
     hourly_rate_cents: int | None = Field(None, ge=0)
+    status: str | None = Field(None, pattern="^(active|archived)$")
 
 class ProjectResponseViewer(ProjectBase):
     model_config = ConfigDict(from_attributes=True)

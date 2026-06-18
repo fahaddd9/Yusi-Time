@@ -4,9 +4,8 @@ export interface Client {
   name: string
   email: string | null
   phone: string | null
-  address: string | null
-  currency: string
   hourly_rate_cents: number | null
+  project_count: number
   created_at: string
   updated_at: string
 }
@@ -20,6 +19,7 @@ export interface Project {
   visibility: "public" | "private"
   status: "active" | "archived" | "completed"
   default_hourly_rate_cents: number | null
+  default_billable: boolean
   budget_hours: number | null
   budget_amount_cents: number | null
   color: string | null
@@ -34,6 +34,8 @@ export interface Task {
   project_id: string
   name: string
   assignee_user_id: string | null
+  estimated_hours: number | null
+  billable_override: boolean | null
   hourly_rate_cents: number | null
   created_at: string
 }
@@ -74,12 +76,16 @@ export interface CreateTaskDTO {
   project_id: string
   name: string
   assignee_user_id?: string | null
+  estimated_hours?: number | null
+  billable_override?: boolean | null
   hourly_rate_cents?: number | null
 }
 
 export interface UpdateTaskDTO {
   name?: string
   assignee_user_id?: string | null
+  estimated_hours?: number | null
+  billable_override?: boolean | null
   hourly_rate_cents?: number | null
 }
 

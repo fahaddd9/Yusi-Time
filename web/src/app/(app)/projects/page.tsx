@@ -3,6 +3,8 @@
 import { useState } from "react"
 import { useProjects } from "@/features/projects/hooks"
 import { Button } from "@/components/ui/button"
+import { useWorkspaceStore } from "@/stores/workspace-store"
+import { useWorkspaces } from "@/features/settings/hooks"
 import { Plus } from "lucide-react"
 import { CreateProjectDialog } from "@/features/projects/components/CreateProjectDialog"
 import { ProjectList } from "@/features/projects/components/ProjectList"
@@ -16,6 +18,12 @@ export default function ProjectsPage() {
   const { data: projectsData, isLoading } = useProjects({ 
     status: statusFilter
   })
+
+  const { activeWorkspaceId } = useWorkspaceStore()
+  const { data: workspaces } = useWorkspaces()
+  const callerRole = workspaces?.find((w) => w.id === activeWorkspaceId)?.role ?? 'viewer'
+  const isManagerOrAdmin = callerRole === 'admin' || callerRole === 'manager'
+  const isViewer = callerRole === 'viewer'
 
   return (
     <div className="space-y-6">
@@ -39,10 +47,12 @@ export default function ProjectsPage() {
             </SelectContent>
           </Select>
 
-          <Button onClick={() => setIsCreateOpen(true)} className="bg-brand-orange hover:bg-brand-orange-hover text-white shadow-sm">
-            <Plus className="w-4 h-4 mr-2" />
-            New Project
-          </Button>
+          {isManagerOrAdmin && (
+            <Button onClick={() => setIsCreateOpen(true)} className="bg-brand-orange hover:bg-brand-orange-hover text-white shadow-sm">
+              <Plus className="w-4 h-4 mr-2" />
+              New Project
+            </Button>
+          )}
         </div>
       </div>
 
@@ -50,6 +60,8 @@ export default function ProjectsPage() {
         projects={projectsData?.data || []} 
         isLoading={isLoading} 
         onEdit={(p) => setEditingProject(p)}
+        isManagerOrAdmin={isManagerOrAdmin}
+        isViewer={isViewer}
       />
 
       <CreateProjectDialog 

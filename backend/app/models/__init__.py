@@ -17,6 +17,10 @@ from app.models.project_member import ProjectMember
 from app.models.task import Task
 from app.models.tag import Tag
 
+# Phase 4 Models
+from app.models.time_entry import TimeEntry
+from app.models.time_entry_tag import TimeEntryTag
+
 __all__ = [
     "User",
     "PasswordResetToken",
@@ -30,4 +34,6 @@ __all__ = [
     "ProjectMember",
     "Task",
     "Tag",
+    "TimeEntry",
+    "TimeEntryTag",
 ]

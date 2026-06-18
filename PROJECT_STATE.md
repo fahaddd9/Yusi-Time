@@ -1,7 +1,7 @@
 # Yusi Time — Project State
-**Last Updated:** 2026-06-02 — Phase 3 Completed
-**Current Phase:** Phase 4 — Time Tracking Core — ⬜ Not Started
-**Last Session Summary:** Phase 3 (Projects, Tasks, Clients, Tags) fully implemented and verified. All backend endpoints, security logic, and frontend components (Projects List, Project Detail, Settings Pages) are complete.
+**Last Updated:** 2026-06-18 — Phase 4 Completed
+**Current Phase:** Phase 5 — Continue, Duplicate & Draft — 🔄 In Progress
+**Last Session Summary:** Phase 4 (Time Tracking Core) fully implemented and verified. All backend endpoints for time entries, rounding, and rate resolution are working. Frontend Timer Bar, Idle Modal, Dashboard, and Timesheet Grid are fully built and tested. 100% of unit tests pass. Ready to start Phase 5.
 
 ---
 
@@ -14,8 +14,8 @@
 | 1.5 | Super Admin Backend (API-only) | ✅ Completed | 2026-05-31 |
 | 2 | Workspace & Members | ✅ Completed | 2026-06-01 |
 | 3 | Projects, Tasks, Clients, Tags | ✅ Completed | 2026-06-02 |
-| 4 | Time Tracking Core | ⬜ Not Started | — |
-| 5 | Continue, Duplicate & Draft | ⬜ Not Started | — |
+| 4 | Time Tracking Core | ✅ Completed | 2026-06-18 |
+| 5 | Continue, Duplicate & Draft | 🔄 In Progress | — |
 | 6 | Approvals & Notifications | ⬜ Not Started | — |
 | 7 | Reports & Analytics | ⬜ Not Started | — |
 | 7.5 | Super Admin UI Dashboard | ⬜ Not Started | — |

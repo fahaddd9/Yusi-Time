@@ -43,13 +43,18 @@ function DialogContent({
   className,
   children,
   showCloseButton = true,
+  nonDismissible = false,
   ...props
 }: DialogPrimitive.Popup.Props & {
   showCloseButton?: boolean
+  nonDismissible?: boolean
 }) {
   return (
     <DialogPortal>
-      <DialogOverlay />
+      <DialogOverlay
+        onClick={nonDismissible ? (e) => e.stopPropagation() : undefined}
+        style={nonDismissible ? { pointerEvents: 'none' } : undefined}
+      />
       <DialogPrimitive.Popup
         data-slot="dialog-content"
         className={cn(

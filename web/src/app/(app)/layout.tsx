@@ -12,9 +12,8 @@ import { Menu } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
 
-// Placeholders for Phase 3 components (do not remove)
-function TimerBar() { return null }
-function IdleModal() { return null }
+import { TimerBar } from '@/features/timer/components/TimerBar'
+import { IdleModal } from '@/features/timer/components/IdleModal'
 
 interface WorkspaceMembership {
   workspaceId: string

@@ -11,6 +11,7 @@ from app.routers.clients import router as clients_router
 from app.routers.projects import router as projects_router
 from app.routers.tasks import router as tasks_router
 from app.routers.tags import router as tags_router
+from app.routers.time_entries import router as time_entries_router
 
 setup_logging()
 
@@ -38,6 +39,7 @@ app.include_router(clients_router, prefix="/api/v1")
 app.include_router(projects_router, prefix="/api/v1")
 app.include_router(tasks_router, prefix="/api/v1")
 app.include_router(tags_router, prefix="/api/v1")
+app.include_router(time_entries_router, prefix="/api/v1")
 
 
 @app.get("/health")

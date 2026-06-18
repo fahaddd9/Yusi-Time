@@ -2,8 +2,10 @@
 
 import { useState } from "react"
 import { useTags, useDeleteTag } from "@/features/projects/hooks"
+import { useWorkspaceStore } from "@/stores/workspace-store"
+import { useWorkspaces } from "@/features/settings/hooks"
 import { Button } from "@/components/ui/button"
-import { Plus, Edit2, Trash2 } from "lucide-react"
+import { Plus, Edit2, Trash2, ShieldAlert } from "lucide-react"
 import { CreateTagDialog } from "./CreateTagDialog"
 
 export function TagsClient() {
@@ -12,8 +14,26 @@ export function TagsClient() {
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [editingTag, setEditingTag] = useState<any>(null)
 
+  const { activeWorkspaceId } = useWorkspaceStore()
+  const { data: workspaces } = useWorkspaces()
+
   if (isLoading) {
     return <div className="p-8 flex justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-orange"></div></div>
+  }
+
+  const callerRole = workspaces?.find((w) => w.id === activeWorkspaceId)?.role ?? 'viewer'
+  const isManagerOrAdmin = callerRole === 'admin' || callerRole === 'manager'
+
+  if (!isManagerOrAdmin) {
+    return (
+      <div className="p-8 max-w-4xl mx-auto space-y-6 text-center">
+        <div className="bg-destructive/10 text-destructive p-12 rounded-xl border border-destructive/20 flex flex-col items-center">
+          <ShieldAlert className="w-12 h-12 mb-4" />
+          <h1 className="text-2xl font-bold mb-2">403 Forbidden</h1>
+          <p>You do not have permission to view or manage tags.</p>
+        </div>
+      </div>
+    )
   }
 
   return (

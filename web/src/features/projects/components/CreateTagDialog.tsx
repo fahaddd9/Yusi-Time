@@ -60,7 +60,11 @@ export function CreateTagDialog({ open, onOpenChange, initialData }: Props) {
           toast.success("Tag updated")
           onOpenChange(false)
         },
-        onError: (err: any) => toast.error(err.response?.data?.detail || "Failed to update tag")
+        onError: (err: any) => {
+          const detail = err.response?.data?.detail;
+          const msg = typeof detail === 'string' ? detail : detail?.detail || "Failed to update tag";
+          toast.error(msg)
+        }
       })
     } else {
       createTag.mutate(data, {
@@ -68,7 +72,11 @@ export function CreateTagDialog({ open, onOpenChange, initialData }: Props) {
           toast.success("Tag created")
           onOpenChange(false)
         },
-        onError: (err: any) => toast.error(err.response?.data?.detail || "Failed to create tag")
+        onError: (err: any) => {
+          const detail = err.response?.data?.detail;
+          const msg = typeof detail === 'string' ? detail : detail?.detail || "Failed to create tag";
+          toast.error(msg)
+        }
       })
     }
   }

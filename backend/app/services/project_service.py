@@ -131,7 +131,11 @@ async def update_project(db: AsyncSession, workspace_id: uuid.UUID, project_id: 
         if not client.scalar_one_or_none():
             raise HTTPException(status_code=400, detail={"detail": "Client not found in workspace", "code": "BAD_REQUEST"})
 
-    for k, v in data.model_dump(exclude_unset=True).items():
+    update_data = data.model_dump(exclude_unset=True)
+    if update_data.get("status") == "active" and project.status == "archived":
+        project.archived_at = None
+
+    for k, v in update_data.items():
         setattr(project, k, v)
         
     await db.flush()

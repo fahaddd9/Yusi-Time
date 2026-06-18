@@ -79,7 +79,11 @@ export function CreateClientDialog({ open, onOpenChange, initialData }: Props) {
           toast.success("Client updated")
           onOpenChange(false)
         },
-        onError: (err: any) => toast.error(err.response?.data?.detail || "Failed to update client")
+        onError: (err: any) => {
+          const detail = err.response?.data?.detail;
+          const msg = typeof detail === 'string' ? detail : detail?.detail || "Failed to update client";
+          toast.error(msg)
+        }
       })
     } else {
       createClient.mutate(payload, {
@@ -87,7 +91,11 @@ export function CreateClientDialog({ open, onOpenChange, initialData }: Props) {
           toast.success("Client created")
           onOpenChange(false)
         },
-        onError: (err: any) => toast.error(err.response?.data?.detail || "Failed to create client")
+        onError: (err: any) => {
+          const detail = err.response?.data?.detail;
+          const msg = typeof detail === 'string' ? detail : detail?.detail || "Failed to create client";
+          toast.error(msg)
+        }
       })
     }
   }

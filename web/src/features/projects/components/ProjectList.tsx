@@ -10,9 +10,11 @@ interface ProjectListProps {
   projects: Project[]
   isLoading: boolean
   onEdit?: (project: Project) => void
+  isManagerOrAdmin?: boolean
+  isViewer?: boolean
 }
 
-export function ProjectList({ projects, isLoading, onEdit }: ProjectListProps) {
+export function ProjectList({ projects, isLoading, onEdit, isManagerOrAdmin, isViewer }: ProjectListProps) {
   const deleteProject = useDeleteProject()
   const archiveProject = useArchiveProject()
 
@@ -75,10 +77,11 @@ export function ProjectList({ projects, isLoading, onEdit }: ProjectListProps) {
                       Private
                     </div>
                   )}
-                  <DropdownMenu>
-                    <DropdownMenuTrigger className="h-8 w-8 inline-flex items-center justify-center rounded-md hover:bg-muted text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity outline-none">
-                      <MoreVertical className="w-4 h-4" />
-                    </DropdownMenuTrigger>
+                  {isManagerOrAdmin && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger className="h-8 w-8 inline-flex items-center justify-center rounded-md hover:bg-muted text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity outline-none">
+                        <MoreVertical className="w-4 h-4" />
+                      </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={() => {
                         if (onEdit) onEdit(project)
@@ -103,6 +106,7 @@ export function ProjectList({ projects, isLoading, onEdit }: ProjectListProps) {
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
+                  )}
                 </div>
               </div>
               
@@ -113,12 +117,14 @@ export function ProjectList({ projects, isLoading, onEdit }: ProjectListProps) {
               <div className="mt-auto">
                 <div className="flex justify-between text-xs text-muted-foreground mb-2">
                   <span>{project.hours_logged.toFixed(2)}h logged</span>
-                  {project.budget_hours ? <span>{project.budget_hours.toFixed(2)}h budget</span> : null}
+                  {!isViewer && project.budget_hours ? <span>{project.budget_hours.toFixed(2)}h budget</span> : null}
                 </div>
-                {project.budget_hours ? (
-                  <Progress className={progressColor} value={Math.min(pct, 100)} />
-                ) : (
-                  <div className="h-1.5 rounded-full bg-muted w-full" />
+                {!isViewer && (
+                  project.budget_hours ? (
+                    <Progress className={progressColor} value={Math.min(pct, 100)} />
+                  ) : (
+                    <div className="h-1.5 rounded-full bg-muted w-full" />
+                  )
                 )}
               </div>
             </div>
