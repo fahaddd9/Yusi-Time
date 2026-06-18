@@ -119,6 +119,11 @@ class StopTimerRequest(BaseModel):
     idle_end_time: datetime | None = None  # PRD §3.3.3 Idle Detection
 
 
+class ContinueEntryRequest(BaseModel):
+    """POST /time-entries/{id}/continue"""
+    force: bool = False
+
+
 class CreateManualEntryRequest(BaseModel):
     """POST /time-entries — API Spec §12."""
     project_id: uuid.UUID

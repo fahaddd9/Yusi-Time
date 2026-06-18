@@ -108,17 +108,20 @@ export function TimerBar() {
     workspaceId: activeWorkspaceId ?? '',
   })
 
-  // Restore description draft on mount (only when no active timer)
-  useEffect(() => {
-    if (!currentEntry) {
-      setDescription(getDraft())
-    }
-  }, [currentEntry]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Sync description with active entry
+  // Sync state with active entry
   useEffect(() => {
     if (currentEntry) {
       setDescription(currentEntry.description ?? '')
+      setSelectedProjectId(currentEntry.project_id)
+      setSelectedTaskId(currentEntry.task_id ?? null)
+      setBillable(currentEntry.billable)
+      setSelectedTagIds(currentEntry.tags?.map((t) => t.id) ?? [])
+    } else {
+      // Restore draft description when no active entry
+      setDescription(getDraft())
+      // We don't automatically reset the project/task here, allowing 
+      // the user to start a new timer with the same project context.
+      setSelectedTagIds([])
     }
   }, [currentEntry?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 

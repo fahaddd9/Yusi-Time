@@ -40,6 +40,7 @@ import {
   Trash2,
   Lock,
 } from 'lucide-react'
+import { ContinueButton } from '@/components/shared/ContinueButton'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
@@ -217,29 +218,7 @@ export default function DashboardPage() {
     return entry.status === 'pending' || entry.status === 'approved'
   }
 
-  // ── Continue button logic ──────────────────────────────────────────────────
   const startTimer = useStartTimer(activeWorkspaceId ?? '')
-  const [switchEntry, setSwitchEntry] = useState<(typeof entries)[0] | null>(null)
-
-  const handleContinue = async (entry: (typeof entries)[0], force: boolean) => {
-    await startTimer.mutateAsync({
-      project_id: entry.project_id,
-      task_id: entry.task_id ?? undefined,
-      description: entry.description ?? undefined,
-      billable: entry.billable,
-      force,
-    })
-    setSwitchEntry(null)
-  }
-
-  const onContinueClick = (entry: (typeof entries)[0]) => {
-    if (currentEntry) {
-      // A timer is already running — show switch confirmation
-      setSwitchEntry(entry)
-    } else {
-      handleContinue(entry, false)
-    }
-  }
 
     return (
     <>
@@ -398,17 +377,14 @@ export default function DashboardPage() {
                     </div>
                     {/* Actions */}
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                      {/* Continue: only for draft entries (Blueprint C1 step 8) */}
+                      {/* Continue logic now encapsulated in ContinueButton */}
                       {entry.status === 'draft' && (
-                        <button
-                          id={`entry-continue-${entry.id}`}
-                          title="Continue this entry"
-                          onClick={() => onContinueClick(entry)}
-                          disabled={startTimer.isPending}
-                          className="p-1 rounded text-muted-foreground hover:text-[#F06900] hover:bg-[#FFF0E6] dark:hover:bg-orange-900/20 transition-colors disabled:opacity-40"
-                        >
-                          <Play className="w-3 h-3 fill-current" />
-                        </button>
+                        <ContinueButton 
+                          entryId={entry.id} 
+                          entryStatus={entry.status} 
+                          workspaceId={activeWorkspaceId ?? ''} 
+                          hasRunningTimer={!!currentEntry} 
+                        />
                       )}
                       {/* Edit / Delete: locked rows dimmed (Blueprint C1 step 7) */}
                       <button
@@ -443,26 +419,7 @@ export default function DashboardPage() {
       </div>
     </div>
 
-    {/* ── Switch Timer Dialog (Continue button) ── */}
-    <AlertDialog open={!!switchEntry} onOpenChange={(o) => !o && setSwitchEntry(null)}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Switch active timer?</AlertDialogTitle>
-          <AlertDialogDescription>
-            A timer is already running for <strong>{currentEntry?.project_name}</strong>. Starting this entry will stop the current timer and save its tracked time.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            className="bg-[#F06900] text-white hover:bg-[#D95E00]"
-            onClick={() => switchEntry && handleContinue(switchEntry, true)}
-          >
-            Stop &amp; Continue
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    {/* The Switch Timer Dialog is now handled by ContinueButton */}
     </>
   )
 }

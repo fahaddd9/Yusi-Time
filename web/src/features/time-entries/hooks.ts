@@ -210,3 +210,49 @@ export function useSubmitEntries(workspaceId: string) {
     },
   })
 }
+
+/**
+ * POST /time-entries/{id}/continue
+ */
+export function useContinueEntry() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ entryId, workspaceId, force = false }:
+      { entryId: string; workspaceId: string; force?: boolean }) =>
+      timeEntriesApi.continue(entryId, { workspaceId, force }),
+    onSuccess: (_, { workspaceId }) => {
+      qc.invalidateQueries({ queryKey: entryKeys.current(workspaceId) })
+      qc.invalidateQueries({ queryKey: entryKeys.all(workspaceId) })
+    },
+    onError: (err: any) => {
+      const code = err?.response?.data?.code
+      if (code === 'TIMER_ALREADY_RUNNING') {
+        toast.error('A timer is already running')
+      } else {
+        toast.error(err?.response?.data?.detail ?? 'Failed to continue entry')
+      }
+    },
+  })
+}
+
+/**
+ * POST /time-entries/{id}/duplicate
+ * MANDATORY: showRoundingToast() in onSuccess.
+ */
+export function useDuplicateEntry() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ entryId, workspaceId }:
+      { entryId: string; workspaceId: string }) =>
+      timeEntriesApi.duplicate(entryId, { workspaceId }),
+    onSuccess: (response, { workspaceId }) => {
+      // MANDATORY rounding toast
+      showRoundingToast(response.data.rounding)
+      qc.invalidateQueries({ queryKey: entryKeys.all(workspaceId) })
+      qc.invalidateQueries({ queryKey: ['time-entries', workspaceId, 'list'] })
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.detail ?? 'Failed to duplicate entry')
+    },
+  })
+}

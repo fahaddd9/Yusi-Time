@@ -1,7 +1,7 @@
 # Yusi Time — Project State
-**Last Updated:** 2026-06-18 — Phase 4 Completed
-**Current Phase:** Phase 5 — Continue, Duplicate & Draft — 🔄 In Progress
-**Last Session Summary:** Phase 4 (Time Tracking Core) fully implemented and verified. All backend endpoints for time entries, rounding, and rate resolution are working. Frontend Timer Bar, Idle Modal, Dashboard, and Timesheet Grid are fully built and tested. 100% of unit tests pass. Ready to start Phase 5.
+**Last Updated:** 2026-06-18 — Phase 5 Completed
+**Current Phase:** Phase 6 — Approvals & Notifications — 🔄 In Progress
+**Last Session Summary:** Phase 4 (Time Tracking Core) fully implemented and verified. All backend endpoints for time entries, rounding, and rate resolution are working. Frontend Timer Bar, Idle Modal, Dashboard, and Timesheet Grid are fully built and tested. 100% of unit tests pass. Phase 5 (Continue, Duplicate & Draft) implemented and verified. Ready to start Phase 6.
 
 ---
 

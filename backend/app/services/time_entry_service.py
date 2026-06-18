@@ -811,13 +811,72 @@ async def continue_entry(
     force: bool,
 ) -> tuple[TimeEntry, User, Project, Task | None]:
     """
-    POST /{entry_id}/continue — scaffolded, implemented in Phase 5.
+    POST /{entry_id}/continue — implemented in Phase 5.
     TRD §6.6 continue_entry.
     """
-    raise HTTPException(
-        status_code=501,
-        detail="Continue entry will be implemented in Phase 5",
+    source = await _load_entry_with_tags(db, uuid.UUID(entry_id))
+    if not source or source.workspace_id != workspace_id:
+        raise HTTPException(status_code=404, detail="Entry not found", headers={"code": "NOT_FOUND"})
+
+    # Authorization
+    if caller_role == "member" and source.user_id != user_id:
+        raise HTTPException(
+            status_code=403,
+            detail="Cannot continue another user's entry",
+            headers={"code": "FORBIDDEN"},
+        )
+
+    # Status check
+    if source.status == "pending":
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot continue a pending entry",
+            headers={"code": "CANNOT_CONTINUE_PENDING"},
+        )
+
+    # Timer conflict
+    running = await _get_running_timer(db, user_id, workspace_id)
+    if running:
+        if not force:
+            raise HTTPException(
+                status_code=409,
+                detail="Timer already running",
+                headers={"code": "TIMER_ALREADY_RUNNING"},
+            )
+        # force=True: stop the running timer first
+        await stop_timer(db, user_id, workspace_id, caller_role, str(running.id), idle_end_time=None)
+
+    # Copy tags from source
+    tag_ids = [row.tag_id for row in (source.tags or [])]
+
+    # Fresh rate snapshot
+    rate_cents = await rate_service.resolve_rate(db, workspace_id, source.project_id, source.task_id)
+
+    # Create new entry
+    new_entry = TimeEntry(
+        workspace_id=workspace_id,
+        user_id=user_id,
+        project_id=source.project_id,
+        task_id=source.task_id,
+        description=source.description,
+        billable=source.billable,
+        status="running",
+        start_time=datetime.now(timezone.utc),
+        hourly_rate_cents=rate_cents,
     )
+    db.add(new_entry)
+    await db.flush()
+
+    await _attach_tags(db, new_entry, tag_ids)
+
+    # Reload entry to eagerly fetch tags
+    new_entry = await _load_entry_with_tags(db, new_entry.id)
+
+    user = await db.get(User, user_id)
+    project = await db.get(Project, new_entry.project_id)
+    task = await db.get(Task, new_entry.task_id) if new_entry.task_id else None
+
+    return new_entry, user, project, task
 
 
 async def duplicate_entry(
@@ -828,10 +887,67 @@ async def duplicate_entry(
     entry_id: str,
 ) -> tuple[TimeEntry, User, Project, Task | None, RoundingResult]:
     """
-    POST /{entry_id}/duplicate — scaffolded, implemented in Phase 5.
+    POST /{entry_id}/duplicate — implemented in Phase 5.
     TRD §6.6 duplicate_entry.
     """
-    raise HTTPException(
-        status_code=501,
-        detail="Duplicate entry will be implemented in Phase 5",
+    source = await _load_entry_with_tags(db, uuid.UUID(entry_id))
+    if not source or source.workspace_id != workspace_id:
+        raise HTTPException(status_code=404, detail="Entry not found", headers={"code": "NOT_FOUND"})
+
+    if caller_role == "member" and source.user_id != user_id:
+        raise HTTPException(
+            status_code=403,
+            detail="Cannot duplicate another user's entry",
+            headers={"code": "FORBIDDEN"},
+        )
+
+    if source.status == "pending":
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot duplicate a pending entry",
+            headers={"code": "CANNOT_DUPLICATE_PENDING"},
+        )
+
+    raw_seconds = source.duration_seconds or 0
+    if source.start_time and source.end_time and raw_seconds == 0:
+        raw_seconds = int((source.end_time - source.start_time).total_seconds())
+
+    workspace = await db.get(Workspace, workspace_id)
+    rule = _build_rounding_rule(workspace)
+    rounding_result = round_duration(raw_seconds, rule)
+
+    rate_cents = await rate_service.resolve_rate(db, workspace_id, source.project_id, source.task_id)
+    billable_cents = _compute_billable_amount(rounding_result.rounded_seconds, rate_cents)
+
+    now = datetime.now(timezone.utc)
+    start_time = datetime(now.year, now.month, now.day, tzinfo=timezone.utc)
+    end_time = start_time + timedelta(seconds=raw_seconds)
+
+    new_entry = TimeEntry(
+        workspace_id=workspace_id,
+        user_id=user_id,
+        project_id=source.project_id,
+        task_id=source.task_id,
+        description=source.description,
+        billable=source.billable,
+        status="draft",
+        start_time=start_time,
+        end_time=end_time,
+        duration_seconds=rounding_result.rounded_seconds,
+        hourly_rate_cents=rate_cents,
+        billable_amount_cents=billable_cents,
     )
+    db.add(new_entry)
+    await db.flush()
+
+    tag_ids = [row.tag_id for row in (source.tags or [])]
+    await _attach_tags(db, new_entry, tag_ids)
+
+    # Reload entry to eagerly fetch tags
+    new_entry = await _load_entry_with_tags(db, new_entry.id)
+
+    user = await db.get(User, user_id)
+    project = await db.get(Project, new_entry.project_id)
+    task = await db.get(Task, new_entry.task_id) if new_entry.task_id else None
+
+    return new_entry, user, project, task, rounding_result

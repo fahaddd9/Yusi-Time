@@ -30,6 +30,7 @@ from app.core.dependencies import get_current_user, get_workspace_member, requir
 from app.models.user import User
 from app.models.workspace_member import WorkspaceMember
 from app.schemas.time_entry import (
+    ContinueEntryRequest,
     CreateManualEntryRequest,
     RoundingResultSchema,
     StartTimerRequest,
@@ -190,23 +191,31 @@ async def stop_timer(
     }
 
 
-# ─── POST /time-entries/{entry_id}/continue  (Phase 5 stub) ──────────────────
+# ─── POST /time-entries/{entry_id}/continue  (Phase 5) ───────────────────────
 
 @router.post("/{entry_id}/continue", status_code=201)
 async def continue_entry(
     entry_id: uuid.UUID,
+    body: ContinueEntryRequest,
     workspace_id: uuid.UUID = Query(...),
     member: WorkspaceMember = Depends(require_role("admin", "manager", "member")),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> Any:
-    """Phase 5 stub — not yet implemented."""
-    await time_entry_service.continue_entry(
-        db, current_user.id, workspace_id, member.role, str(entry_id), force=False
+    """Continue a time entry."""
+    entry, user, project, task = await time_entry_service.continue_entry(
+        db=db,
+        user_id=current_user.id,
+        workspace_id=workspace_id,
+        caller_role=member.role,
+        entry_id=str(entry_id),
+        force=body.force,
     )
+    entry_dict = _build_entry_dict(entry, user, project, task)
+    return {"data": _serialise(entry_dict, member.role)}
 
 
-# ─── POST /time-entries/{entry_id}/duplicate  (Phase 5 stub) ─────────────────
+# ─── POST /time-entries/{entry_id}/duplicate  (Phase 5) ──────────────────────
 
 @router.post("/{entry_id}/duplicate", status_code=201)
 async def duplicate_entry(
@@ -216,10 +225,19 @@ async def duplicate_entry(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> Any:
-    """Phase 5 stub — not yet implemented."""
-    await time_entry_service.duplicate_entry(
-        db, current_user.id, workspace_id, member.role, str(entry_id)
+    """Duplicate a time entry."""
+    entry, user, project, task, rounding = await time_entry_service.duplicate_entry(
+        db=db,
+        user_id=current_user.id,
+        workspace_id=workspace_id,
+        caller_role=member.role,
+        entry_id=str(entry_id)
     )
+    entry_dict = _build_entry_dict(entry, user, project, task)
+    return {
+        "data": _serialise(entry_dict, member.role),
+        "rounding": _rounding_schema(rounding),
+    }
 
 
 # ─── GET /time-entries ────────────────────────────────────────────────────────

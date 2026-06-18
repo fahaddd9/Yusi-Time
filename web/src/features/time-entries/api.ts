@@ -158,4 +158,20 @@ export const timeEntriesApi = {
       { entry_ids: entryIds },
       { params: { workspace_id: workspaceId } },
     ),
+
+  /** POST /time-entries/{id}/continue */
+  continue: (entryId: string, params: { workspaceId: string; force?: boolean }) =>
+    apiClient.post<{ data: TimeEntry }>(
+      `/time-entries/${entryId}/continue`,
+      { force: params.force || false },
+      { params: { workspace_id: params.workspaceId } },
+    ),
+
+  /** POST /time-entries/{id}/duplicate */
+  duplicate: (entryId: string, params: { workspaceId: string }) =>
+    apiClient.post<{ data: TimeEntry; rounding: RoundingResult }>(
+      `/time-entries/${entryId}/duplicate`,
+      {},
+      { params: { workspace_id: params.workspaceId } },
+    ),
 }
