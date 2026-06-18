@@ -14,7 +14,7 @@
  * is enabled in workspace settings.
  */
 
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { Play, Square, Clock, DollarSign } from 'lucide-react'
 import { useWorkspaceStore } from '@/stores/workspace-store'
 import { useTimerStore } from '@/stores/timer-store'
@@ -76,7 +76,7 @@ export function TimerBar() {
   const { data: projectsData } = useProjects()
   const projects = (projectsData?.data ?? []).filter((p) => p.status === 'active')
   const { data: tasksData } = useTasks(selectedProjectId ?? undefined)
-  const tasks = tasksData?.data ?? []
+  const tasks = useMemo(() => tasksData?.data ?? [], [tasksData?.data])
   const { data: tagsData } = useTags()
   const tags = tagsData ?? []
 

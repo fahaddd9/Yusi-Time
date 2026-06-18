@@ -48,7 +48,7 @@ def upgrade() -> None:
 
     # Create entry_status enum if it does not yet exist
     # (the initial schema migration may have created it already)
-    entry_status_enum = postgresql.ENUM(
+    postgresql.ENUM(
         "draft", "running", "pending", "approved",
         name="entry_status",
         create_type=False,   # don't create automatically — we check below

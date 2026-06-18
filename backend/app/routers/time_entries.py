@@ -20,7 +20,6 @@ and TimeEntryObjectViewer at serialisation time (API Spec §1.11).
 from __future__ import annotations
 
 import uuid
-from datetime import date
 from typing import Any
 
 from fastapi import APIRouter, Depends, Query
@@ -32,23 +31,12 @@ from app.models.user import User
 from app.models.workspace_member import WorkspaceMember
 from app.schemas.time_entry import (
     CreateManualEntryRequest,
-    CreateManualEntryResponse,
-    CreateManualEntryResponseViewer,
-    GetCurrentTimerResponse,
-    GetCurrentTimerResponseViewer,
-    ListEntriesResponse,
-    ListEntriesResponseViewer,
     RoundingResultSchema,
     StartTimerRequest,
     StopTimerRequest,
-    StopTimerResponse,
-    StopTimerResponseViewer,
-    TagInEntry,
     TimeEntryObject,
     TimeEntryObjectViewer,
     UpdateEntryRequest,
-    UpdateEntryResponse,
-    UpdateEntryResponseViewer,
 )
 from app.services import time_entry_service
 from app.services.time_entry_service import _build_entry_dict
@@ -155,7 +143,6 @@ async def submit_entries(
     POST /time-entries/submit — Phase 4 Submit Week.
     """
     from app.models.time_entry import TimeEntry
-    from fastapi import HTTPException
 
     submitted_ids = []
     for entry_id in body.entry_ids:

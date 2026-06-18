@@ -244,7 +244,7 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
               <div className="bg-card border border-border p-8 rounded-xl shadow-sm flex flex-col items-start text-left">
                 <h3 className="text-lg font-semibold text-foreground mb-1">Edit Details</h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Update the project's name, client, budget, or billing preferences.
+                  Update the project&apos;s name, client, budget, or billing preferences.
                 </p>
                 <Button onClick={() => setIsSettingsOpen(true)} className="bg-brand-orange hover:bg-brand-orange-hover text-white">
                   Open Settings

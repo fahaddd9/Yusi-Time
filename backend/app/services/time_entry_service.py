@@ -25,7 +25,6 @@ import base64
 import json
 import uuid
 from datetime import datetime, timedelta, timezone
-from typing import Any
 
 from fastapi import HTTPException
 from sqlalchemy import and_, select

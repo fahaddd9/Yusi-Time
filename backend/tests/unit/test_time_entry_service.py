@@ -26,7 +26,7 @@ Checklist coverage:
 import uuid
 import pytest
 from datetime import datetime, timedelta, timezone
-from unittest.mock import AsyncMock, MagicMock, patch, call
+from unittest.mock import AsyncMock, MagicMock, patch
 from fastapi import HTTPException
 
 
@@ -206,7 +206,6 @@ class TestStartTimer:
         db.execute = AsyncMock(return_value=mock_scalar)
 
         from app.services.time_entry_service import start_timer
-        from app.models.time_entry import TimeEntry as TE
 
         # Patch rate_service.resolve_rate so it doesn't need a real DB
         with patch("app.services.time_entry_service.rate_service.resolve_rate", new=AsyncMock(return_value=None)):
@@ -217,7 +216,7 @@ class TestStartTimer:
                 billable=None, force=False,
             )
         # The returned entry is the real TimeEntry object created inside the service
-        assert entry.billable == False  # inherited from project.default_billable=False
+        assert entry.billable is False  # inherited from project.default_billable=False
 
 
 # ─── stop_timer tests ─────────────────────────────────────────────────────────
@@ -235,7 +234,6 @@ class TestStopTimer:
         from app.models.task import Task
         from app.models.user import User
         from app.models.workspace import Workspace
-        from app.models.time_entry import TimeEntry
 
         db = AsyncMock()
         db.add = MagicMock()
@@ -269,7 +267,6 @@ class TestStopTimer:
         from app.services.time_entry_service import stop_timer
         entry = make_entry(status="draft")
 
-        from app.models.time_entry import TimeEntry
         db = AsyncMock()
         mock_result = MagicMock()
         mock_result.scalar_one_or_none = MagicMock(return_value=entry)
@@ -333,7 +330,6 @@ class TestStopTimer:
         ws = make_workspace(rounding_mode="none")
 
         from app.models.project import Project
-        from app.models.task import Task
         from app.models.user import User
         from app.models.workspace import Workspace
 
@@ -446,7 +442,6 @@ class TestCreateManualEntry:
 class TestLockRules:
 
     async def _make_db_for_update(self, entry, workspace):
-        from app.models.time_entry import TimeEntry
         db = AsyncMock()
         db.add = MagicMock()
 

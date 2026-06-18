@@ -2,10 +2,10 @@ from datetime import datetime, timezone
 from sqlalchemy import DateTime, func
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy.pool import NullPool
 from app.core.config import get_settings
 
 settings = get_settings()
-from sqlalchemy.pool import NullPool
 engine = create_async_engine(settings.database_url, echo=False, poolclass=NullPool)
 AsyncSessionLocal = async_sessionmaker(
     engine, class_=AsyncSession, expire_on_commit=False

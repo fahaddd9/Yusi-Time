@@ -89,6 +89,7 @@ export function Sidebar({
         !isMobile && "items-center lg:items-start lg:px-4"
       )}>
         {/* SKILL §1.1 — logo: always use SVG file, never recreate in code */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img 
           src="/logo-dark.svg" 
           alt="Yusi Time" 
