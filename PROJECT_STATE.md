@@ -1,7 +1,7 @@
 # Yusi Time — Project State
 **Last Updated:** 2026-06-18 — Phase 5 Completed
-**Current Phase:** Phase 6 — Approvals & Notifications — 🔄 In Progress
-**Last Session Summary:** Phase 4 (Time Tracking Core) fully implemented and verified. All backend endpoints for time entries, rounding, and rate resolution are working. Frontend Timer Bar, Idle Modal, Dashboard, and Timesheet Grid are fully built and tested. 100% of unit tests pass. Phase 5 (Continue, Duplicate & Draft) implemented and verified. Ready to start Phase 6.
+**Current Phase:** Phase 6 — Approvals & Notifications — ⬜ Not Started
+**Last Session Summary:** Phase 5 (Continue, Duplicate & Draft) fully implemented and verified. Both backend API endpoints and frontend components (`ContinueButton`, `DuplicateMenuItem`) are complete and successfully passed manual and automated testing. CI lint errors were resolved. Ready to initialize Phase 6.
 
 ---
 
@@ -15,7 +15,7 @@
 | 2 | Workspace & Members | ✅ Completed | 2026-06-01 |
 | 3 | Projects, Tasks, Clients, Tags | ✅ Completed | 2026-06-02 |
 | 4 | Time Tracking Core | ✅ Completed | 2026-06-18 |
-| 5 | Continue, Duplicate & Draft | 🔄 In Progress | — |
+| 5 | Continue, Duplicate & Draft | ✅ Completed | 2026-06-18 |
 | 6 | Approvals & Notifications | ⬜ Not Started | — |
 | 7 | Reports & Analytics | ⬜ Not Started | — |
 | 7.5 | Super Admin UI Dashboard | ⬜ Not Started | — |
@@ -27,44 +27,44 @@
 
 ## Current Phase Detail
 
-### Phase 3 — Projects, Tasks, Clients, Tags — ✅ Completed
+### Phase 5 — Continue, Duplicate & Draft — ✅ Completed
 
 #### Steps Completed
-- [x] Step 3.1 — Backend Models: Created and verified SQLAlchemy models.
-- [x] Step 3.2 — Backend Schemas: Built Pydantic models with financial isolation logic for viewers.
-- [x] Step 3.3 — Client Service & Router: Full CRUD endpoints.
-- [x] Step 3.4 — Project Service & Router: Includes archiving and robust visibility control (`public` vs `private`).
-- [x] Step 3.5 — Task Service & Router: Handled assignee validation and fallback hourly rates.
-- [x] Step 3.6 — Tag Service & Router: Full CRUD endpoints.
-- [x] Step 3.7 — Phase 3 Tests: Automated tests maintaining 100% test pass rate and high coverage.
-- [x] Step 3.8 — Shared Components Library: Built UI components (`ColorPicker`, `ProjectTag`, `StatusBadge`).
-- [x] Step 3.9 — Projects API + Hooks: Integrated React Query with optimistic UI capabilities.
-- [x] Step 3.10 — Projects List Page: Implemented filterable grid and "Create Project" flow.
-- [x] Step 3.11 — Project Detail Page: Deep-dive view featuring nested tabs and integrated Task management.
-- [x] Step 3.12 — Clients + Tags Settings Pages: Built complete setting panels for workspace clients and tags management.
+- [x] Step 5.1 — Backend Models & Drafts: Validated drafts field length and handled frontend draft syncing.
+- [x] Step 5.2 — Backend Endpoints (Continue & Duplicate): Implemented endpoints with fresh rate fetching, force-stop logic, and proper midnight alignment for duplication.
+- [x] Step 5.3 — Phase 5 Tests: Added comprehensive testing for continue/duplicate logic including rounding rule checks and force-stop behavior.
+- [x] Step 5.4 — Frontend API & Hooks: Implemented `useContinueEntry` and `useDuplicateEntry` mutations.
+- [x] Step 5.5 — Frontend UI Integration: Built `ContinueButton` and `DuplicateMenuItem`. Wired `ContinueButton` securely into the Dashboard UI. 
 
 #### Decisions Made
-- `ColorPicker` uses `render` prop explicitly for Base UI Popover triggers and gracefully handles nullish DB color values.
-- Used `useWorkspaceStore` globally to handle cache scopes and prevent cross-workspace data bleed in hooks.
+- Duplication always calculates a fresh hourly rate from the database instead of inheriting the source entry's historical rate.
+- Duplicate and Continue actions return `null` instead of rendering a disabled button for entries with a `pending` status to prevent UI ambiguity.
+- The `DuplicateMenuItem` component is built but explicitly waiting for Phase 7 tables to be rendered since current tables don't use Dropdown Menus.
 
 #### Issues / Bugs Discovered and Resolved
-- Fixed minor TypeScript mismatch in `ColorPicker` by modifying props to securely accept `string | null` from API DTOs.
-- Ensured `useWorkspace` correctly fetched the workspaceId globally, bypassing React-Router constraint complexities via Zustand.
+- Fixed `ContinueButton` Base UI TooltipTrigger structure to use `render={<button/>}` due to Base UI v1 deprecating `asChild`.
+- Fixed `TimerBar.tsx` not properly synchronizing Project/Task dropdowns when forcing a new entry via the Continue action.
 
 ---
 
-### Phase 2 — Workspace & Members — ✅ Completed
+### Phase 4 — Time Tracking Core — ✅ Completed
 
-#### Open Blockers
-*(None)*
+#### Steps Completed
+- [x] Step 4.1 — Backend Time Entry CRUD: Basic CRUD + Rounding Logic + Billable computations.
+- [x] Step 4.2 — Backend Timer Actions: start, stop, discard endpoints and validations.
+- [x] Step 4.3 — Phase 4 Backend Tests.
+- [x] Step 4.4 — Timer Store & Hooks: Centralized running timer logic.
+- [x] Step 4.5 — Timer Bar UI.
+- [x] Step 4.6 — Idle Detection Modal: Intercepts AFK timers.
+- [x] Step 4.7 — Manual Entry Modal.
+- [x] Step 4.8 — Dashboard UI.
+- [x] Step 4.9 — Timesheet Grid UI.
 
-#### Test Results
-- `pytest tests/ -v`: **101 passed, 0 failed**
-- `pytest --cov=app --cov-fail-under=80`: **85.85% coverage ✅**
+#### Decisions Made
+- Abstracted all rounding rules into a pure `rounding_service` ensuring the backend *never* saves raw seconds.
 
-#### Phase 2 Completion Status
-100% complete. All tests passing. All checklist items verified.
-Human supervisor approval received: Pending
+#### Issues / Bugs Discovered and Resolved
+- Handled overlapping timers manually through standard `stop_timer` intercepting mechanisms.
 
 ---
 
