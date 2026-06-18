@@ -27,11 +27,11 @@ interface ContinueButtonProps {
 export function ContinueButton({
   entryId, entryStatus, workspaceId, hasRunningTimer
 }: ContinueButtonProps) {
-  // ABSENT for pending — returns null, not disabled
-  if (entryStatus === 'pending') return null
-
   const { mutate, isPending } = useContinueEntry()
   const [showConfirm, setShowConfirm] = useState(false)
+
+  // ABSENT for pending — returns null, not disabled
+  if (entryStatus === 'pending') return null
 
   const handleClick = () => {
     if (hasRunningTimer) {

@@ -8,7 +8,7 @@ from app.models.time_entry import TimeEntry
 from app.models.time_entry_tag import TimeEntryTag
 from app.services.time_entry_service import continue_entry, duplicate_entry
 
-from tests.unit.test_time_entry_service import make_db, make_workspace, make_project, make_user, make_entry, make_task
+from tests.unit.test_time_entry_service import make_workspace, make_project, make_user, make_entry
 
 @pytest.mark.asyncio
 class TestContinueEntry:
@@ -24,10 +24,14 @@ class TestContinueEntry:
             from app.models.project import Project
             from app.models.user import User
             from app.models.task import Task
-            if cls is Workspace: return workspace
-            if cls is Project: return project
-            if cls is User: return user
-            if cls is Task: return None
+            if cls is Workspace:
+                return workspace
+            if cls is Project:
+                return project
+            if cls is User:
+                return user
+            if cls is Task:
+                return None
             return None
         db.get = _get
 
@@ -43,8 +47,7 @@ class TestContinueEntry:
             else:
                 mock_source.tags = []
         
-        mock_scalar = MagicMock()
-        
+
         # We can implement a side effect for execute
         async def _execute(stmt):
             stmt_str = str(stmt).lower()
@@ -54,7 +57,6 @@ class TestContinueEntry:
             else:
                  # Check if we are loading the newly added entry
                  # by looking at added_entries
-                 from app.models.time_entry import TimeEntry
                  entries = [e for e in added_entries if isinstance(e, TimeEntry)]
                  if entries:
                      entries[-1].tags = [] # Provide empty tags for mock
@@ -189,10 +191,14 @@ class TestDuplicateEntry:
             from app.models.project import Project
             from app.models.user import User
             from app.models.task import Task
-            if cls is Workspace: return workspace
-            if cls is Project: return project
-            if cls is User: return user
-            if cls is Task: return None
+            if cls is Workspace:
+                return workspace
+            if cls is Project:
+                return project
+            if cls is User:
+                return user
+            if cls is Task:
+                return None
             return None
         db.get = _get
 
@@ -207,7 +213,6 @@ class TestDuplicateEntry:
         
         async def _execute(stmt):
             res = MagicMock()
-            from app.models.time_entry import TimeEntry
             entries = [e for e in added_entries if isinstance(e, TimeEntry)]
             if entries:
                 entries[-1].tags = []

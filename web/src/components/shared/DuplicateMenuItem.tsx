@@ -9,8 +9,8 @@ interface Props {
 }
 
 export function DuplicateMenuItem({ entryId, entryStatus, workspaceId }: Props) {
-  if (entryStatus === 'pending') return null  // ABSENT not disabled
   const { mutate } = useDuplicateEntry()
+  if (entryStatus === 'pending') return null  // ABSENT not disabled
   return (
     <DropdownMenuItem onClick={() => mutate({ entryId, workspaceId })}>
       <Copy className="w-4 h-4 mr-2" />Duplicate
