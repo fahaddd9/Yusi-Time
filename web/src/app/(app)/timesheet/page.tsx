@@ -485,7 +485,7 @@ function EditEntrySheet({ entry, onClose, workspaceId, workspace }: EditEntryShe
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-xs text-muted-foreground mb-1 block">Project</label>
-              <Select value={selProjectId} onValueChange={(val) => { setSelProjectId(val); setSelTaskId('none') }}>
+              <Select value={selProjectId} onValueChange={(val) => { setSelProjectId(val || ''); setSelTaskId('none') }}>
                 <SelectTrigger className="w-full focus:ring-[#F06900]">
                   <SelectValue placeholder="Select project...">
                     {selectedProject ? (
@@ -571,11 +571,11 @@ function EditEntrySheet({ entry, onClose, workspaceId, workspace }: EditEntryShe
             {formatDuration(rawSeconds)}
           </span>
         </div>
-        {preview && preview.raw_seconds !== preview.rounded_seconds && (
+        {preview && preview.changed && (
           <div className="text-xs bg-muted/50 rounded-lg px-3 py-2 flex items-center justify-between mt-[-16px]">
-            <span className="text-muted-foreground">Rounded ({preview.rounding_interval_minutes}m {preview.rounding_mode})</span>
+            <span className="text-muted-foreground">Rounded ({workspace?.rounding_interval_minutes}m {workspace?.rounding_mode})</span>
             <span className="font-mono font-medium text-[#F06900]">
-              {formatDuration(preview.rounded_seconds)}
+              {formatDuration(preview.rounded)}
             </span>
           </div>
         )}
