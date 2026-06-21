@@ -23,7 +23,7 @@ class TestApprovalsIntegration:
         }, headers={"Authorization": f"Bearer {admin_token}"})
 
         # Create project
-        r = await async_client.post(f"/api/v1/projects", params={"workspace_id": ws_id}, json={
+        r = await async_client.post("/api/v1/projects", params={"workspace_id": ws_id}, json={
             "name": "Test Project", "visibility": "public"
         }, headers={"Authorization": f"Bearer {admin_token}"})
         project_id = r.json()["data"]["id"]

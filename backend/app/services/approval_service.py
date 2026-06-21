@@ -1,7 +1,7 @@
 import uuid
 import zoneinfo
 from datetime import date, datetime, timedelta, timezone as dt_timezone
-from sqlalchemy import select, update, func
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException
 

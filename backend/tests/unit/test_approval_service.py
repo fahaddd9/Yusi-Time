@@ -1,13 +1,12 @@
 import uuid
 import pytest
-from datetime import date, datetime, timezone
+from datetime import date
 from unittest.mock import AsyncMock, MagicMock, patch
 from fastapi import HTTPException
 from app.services.approval_service import (
     submit_week,
     approve_submission,
     reject_submission,
-    list_pending_submissions,
 )
 from app.models.time_entry import TimeEntry
 from app.models.timesheet_submission import TimesheetSubmission

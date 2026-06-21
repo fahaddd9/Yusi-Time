@@ -20,7 +20,6 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 from app.core.config import settings  # noqa: E402
 from app.core.database import Base  # noqa: E402
-import app.models  # noqa: E402
 
 config.set_main_option("sqlalchemy.url", settings.database_url)
 target_metadata = Base.metadata

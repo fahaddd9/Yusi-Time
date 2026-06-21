@@ -5,11 +5,9 @@ from app.services.notification_service import (
     create,
     create_for_all_members,
     create_for_role,
-    list_notifications,
     mark_read,
     mark_all_read
 )
-from app.models.notification import Notification
 from app.models.workspace_member import WorkspaceMember
 
 def make_db(members=None, count=0, notifications=None):
