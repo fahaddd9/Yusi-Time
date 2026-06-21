@@ -12,6 +12,8 @@ from app.routers.projects import router as projects_router
 from app.routers.tasks import router as tasks_router
 from app.routers.tags import router as tags_router
 from app.routers.time_entries import router as time_entries_router
+from app.routers.notifications import router as notifications_router
+from app.routers.approvals import router as approvals_router
 
 setup_logging()
 
@@ -40,6 +42,8 @@ app.include_router(projects_router, prefix="/api/v1")
 app.include_router(tasks_router, prefix="/api/v1")
 app.include_router(tags_router, prefix="/api/v1")
 app.include_router(time_entries_router, prefix="/api/v1")
+app.include_router(notifications_router, prefix="/api/v1")
+app.include_router(approvals_router, prefix="/api/v1")
 
 
 @app.get("/health")

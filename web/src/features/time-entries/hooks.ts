@@ -43,11 +43,11 @@ export function useCurrentTimer(workspaceId: string | null) {
 /**
  * GET /time-entries — cursor-paginated list.
  */
-export function useTimeEntries(params: ListEntriesParams) {
+export function useTimeEntries(params: ListEntriesParams, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: entryKeys.list(params.workspace_id, params),
     queryFn: () => timeEntriesApi.listEntries(params).then((r) => r.data),
-    enabled: !!params.workspace_id,
+    enabled: !!params.workspace_id && (options?.enabled ?? true),
     staleTime: 30_000,
   })
 }

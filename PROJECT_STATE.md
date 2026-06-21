@@ -1,7 +1,7 @@
 # Yusi Time — Project State
-**Last Updated:** 2026-06-18 — Phase 5 Completed
-**Current Phase:** Phase 6 — Approvals & Notifications — ⬜ Not Started
-**Last Session Summary:** Phase 5 (Continue, Duplicate & Draft) fully implemented and verified. Both backend API endpoints and frontend components (`ContinueButton`, `DuplicateMenuItem`) are complete and successfully passed manual and automated testing. CI lint errors were resolved. Ready to initialize Phase 6.
+**Last Updated:** 2026-06-18 — Phase 6 Completed
+**Current Phase:** Phase 7 — Reports & Analytics — ⬜ Not Started
+**Last Session Summary:** Phase 6 (Approvals & Notifications) fully implemented and verified. Frontend React Query hooks built for querying notifications and approving timesheets. Notification Bell badges properly display unread counts with framer motion spring animations. Approval workflow features including Quick Approve and Quick Reject UI are fully functional. Ready to initialize Phase 7.
 
 ---
 
@@ -16,7 +16,7 @@
 | 3 | Projects, Tasks, Clients, Tags | ✅ Completed | 2026-06-02 |
 | 4 | Time Tracking Core | ✅ Completed | 2026-06-18 |
 | 5 | Continue, Duplicate & Draft | ✅ Completed | 2026-06-18 |
-| 6 | Approvals & Notifications | ⬜ Not Started | — |
+| 6 | Approvals & Notifications | ✅ Completed | 2026-06-18 |
 | 7 | Reports & Analytics | ⬜ Not Started | — |
 | 7.5 | Super Admin UI Dashboard | ⬜ Not Started | — |
 | 8 | Webhooks, Polish & Deploy | ⬜ Not Started | — |

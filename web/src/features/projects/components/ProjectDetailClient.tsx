@@ -12,6 +12,7 @@ import { StatusBadge } from "@/components/ui/status-badge"
 import { ChevronLeft, Edit2, Archive, Lock } from "lucide-react"
 import Link from "next/link"
 import { TaskTable } from "./TaskTable"
+import { ProjectMembers } from "./ProjectMembers"
 import { CreateProjectDialog } from "./CreateProjectDialog"
 import { Progress } from "@/components/ui/progress"
 import { useWorkspaceStore } from "@/stores/workspace-store"
@@ -233,9 +234,7 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
         </TabsContent>
         {project.visibility === 'private' && (
           <TabsContent value="members" className="mt-6">
-            <div className="bg-card border border-border p-8 rounded-xl shadow-sm text-center text-muted-foreground">
-              Project Members management will be implemented in a future phase.
-            </div>
+            <ProjectMembers projectId={project.id} isManagerOrAdmin={isManagerOrAdmin} />
           </TabsContent>
         )}
         {isManagerOrAdmin && (

@@ -23,6 +23,7 @@ import { useIdleDetector } from '@/features/timer/hooks/useIdleDetector'
 import { useDescriptionDraft } from '@/features/timer/hooks/useDescriptionDraft'
 import { useMe, useWorkspace } from '@/features/settings/hooks'
 import { useProjects, useTasks, useTags } from '@/features/projects/hooks'
+import { NotificationBell } from '@/features/notifications/components/NotificationBell'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   DropdownMenu,
@@ -76,7 +77,10 @@ export function TimerBar() {
   const { data: projectsData } = useProjects()
   const projects = (projectsData?.data ?? []).filter((p) => p.status === 'active')
   const { data: tasksData } = useTasks(selectedProjectId ?? undefined)
-  const tasks = useMemo(() => tasksData?.data ?? [], [tasksData?.data])
+  const tasks = useMemo(() => {
+    const allTasks = tasksData?.data ?? []
+    return allTasks.filter(t => !t.assignee_user_id || t.assignee_user_id === user?.id)
+  }, [tasksData?.data, user?.id])
   const { data: tagsData } = useTags()
   const tags = tagsData ?? []
 
@@ -423,6 +427,12 @@ export function TimerBar() {
           )}
         </div>
       )}
+
+      {/* ── Spacer to push NotificationBell to the right ── */}
+      <div className="flex-1" />
+
+      {/* ── Notification Bell ── */}
+      <NotificationBell />
 
       {/* ── Switch Timer Confirmation Dialog ── */}
       <AlertDialog open={showSwitchDialog} onOpenChange={setShowSwitchDialog}>

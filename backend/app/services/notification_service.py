@@ -75,3 +75,117 @@ async def create_for_all_members(
         )
         notifications.append(n)
     return notifications
+
+async def create(
+    db: AsyncSession,
+    workspace_id: _uuid.UUID,
+    user_id: _uuid.UUID,
+    event_type: str,
+    title: str,
+    message: str,
+    metadata: dict | None = None,
+) -> Notification:
+    return await create_notification(db, workspace_id, user_id, event_type, title, message, metadata)
+
+async def create_for_role(
+    db: AsyncSession,
+    workspace_id: _uuid.UUID,
+    roles: list[str],
+    event_type: str,
+    title: str,
+    message: str,
+    metadata: dict | None = None,
+) -> None:
+    stmt = select(WorkspaceMember.user_id).where(
+        WorkspaceMember.workspace_id == workspace_id,
+        WorkspaceMember.role.in_(roles),
+    )
+    result = await db.execute(stmt)
+    user_ids = result.scalars().all()
+    
+    notifications = [
+        Notification(
+            workspace_id=workspace_id,
+            user_id=uid,
+            event_type=event_type,
+            title=title,
+            message=message,
+            event_metadata=metadata,
+        )
+        for uid in user_ids
+    ]
+    if notifications:
+        db.add_all(notifications)
+
+async def list_notifications(
+    db: AsyncSession,
+    workspace_id: _uuid.UUID,
+    user_id: _uuid.UUID,
+    unread_only: bool,
+    limit: int,
+    offset: int,
+) -> tuple[list[Notification], int]:
+    from sqlalchemy import func
+    stmt = select(Notification).where(
+        Notification.workspace_id == workspace_id,
+        Notification.user_id == user_id,
+    )
+    if unread_only:
+        stmt = stmt.where(Notification.read_at.is_(None))
+        
+    count_stmt = select(func.count()).select_from(stmt.subquery())
+    count_result = await db.execute(count_stmt)
+    total = count_result.scalar_one()
+    
+    stmt = stmt.order_by(Notification.created_at.desc()).offset(offset).limit(limit)
+    result = await db.execute(stmt)
+    items = list(result.scalars().all())
+    
+    # Get total unread across all pages
+    unread_stmt = select(func.count()).select_from(Notification).where(
+        Notification.workspace_id == workspace_id,
+        Notification.user_id == user_id,
+        Notification.read_at.is_(None)
+    )
+    unread_result = await db.execute(unread_stmt)
+    unread_count = unread_result.scalar_one()
+
+    return items, total, unread_count
+
+async def mark_read(
+    db: AsyncSession,
+    user_id: _uuid.UUID,
+    notification_ids: list[_uuid.UUID],
+) -> None:
+    from sqlalchemy import update
+    from datetime import datetime, UTC
+    if not notification_ids:
+        return
+    stmt = (
+        update(Notification)
+        .where(
+            Notification.user_id == user_id,
+            Notification.id.in_(notification_ids),
+            Notification.read_at.is_(None),
+        )
+        .values(read_at=datetime.now(UTC))
+    )
+    await db.execute(stmt)
+
+async def mark_all_read(
+    db: AsyncSession,
+    workspace_id: _uuid.UUID,
+    user_id: _uuid.UUID,
+) -> None:
+    from sqlalchemy import update
+    from datetime import datetime, UTC
+    stmt = (
+        update(Notification)
+        .where(
+            Notification.workspace_id == workspace_id,
+            Notification.user_id == user_id,
+            Notification.read_at.is_(None),
+        )
+        .values(read_at=datetime.now(UTC))
+    )
+    await db.execute(stmt)

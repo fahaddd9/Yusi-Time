@@ -1,8 +1,9 @@
 "use client"
-import { useEffect } from "react"
+import { useState, useEffect } from "react"
 
 import { useQuery, useMutation } from "@tanstack/react-query"
 import { apiClient } from "@/lib/api-client"
+import { authApi } from "@/features/auth/api"
 import { tokenStore } from "@/lib/token-store"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -16,11 +17,40 @@ export default function JoinWorkspacePage({ params }: { params: { token: string 
   const router = useRouter()
   const { token } = params
 
-  const isLoggedIn = !!tokenStore.getAccessToken()
+  // Three-state auth check:
+  //   'checking'     — doing a silent refresh to see if the user is actually logged in
+  //   'authenticated' — confirmed logged in (token refreshed or already in memory)
+  //   'unauthenticated' — refresh failed; user must log in first
+  const [authState, setAuthState] = useState<'checking' | 'authenticated' | 'unauthenticated'>('checking')
+
+  useEffect(() => {
+    // If the in-memory token is already set (e.g. user navigated within the SPA), we're done.
+    if (tokenStore.getAccessToken()) {
+      setAuthState('authenticated')
+      return
+    }
+
+    // The token isn't in memory yet. This happens on a cold page load (e.g. pasting
+    // an invite link while logged in). Attempt a silent refresh using the HttpOnly
+    // refresh_token cookie before deciding the user is logged out.
+    authApi.refresh()
+      .then((res) => {
+        tokenStore.setAccessToken(res.data.access_token)
+        setAuthState('authenticated')
+      })
+      .catch(() => {
+        // Refresh failed — user is genuinely not logged in. Send them to login
+        // with the invite URL as the redirect param so they land back here after.
+        router.push(`/login?redirect=/join/${token}`)
+        setAuthState('unauthenticated')
+      })
+  }, [token, router])
 
   const { data, isLoading, error, isError } = useQuery({
     queryKey: ["invite", token],
     queryFn: () => apiClient.get(`/invites/${token}`).then((res) => res.data),
+    // Only fire the query once we've confirmed the user is authenticated.
+    enabled: authState === 'authenticated',
     retry: false,
   })
 
@@ -28,14 +58,15 @@ export default function JoinWorkspacePage({ params }: { params: { token: string 
   const acceptInvite = useMutation({
     mutationFn: () => apiClient.post(`/invites/${token}/accept`),
     onSuccess: () => {
+      toast.success("You've joined the workspace!")
       // Go to dashboard. AppLayout will refresh user/workspaces automatically.
       router.push("/dashboard")
     },
     onError: (error: any) => {
       if (error.response?.status === 401) {
-        // Just in case token is invalid
         router.push(`/login?redirect=/join/${token}`)
       } else if (error.response?.data?.code === 'ALREADY_MEMBER') {
+        toast.info("You're already a member of this workspace.")
         router.push("/dashboard")
       } else {
         const msg = error.response?.data?.detail || "Failed to accept invite"
@@ -44,16 +75,10 @@ export default function JoinWorkspacePage({ params }: { params: { token: string 
     }
   })
 
-  // ... inside component ...
-  useEffect(() => {
-    if (!isLoggedIn) {
-      router.push(`/login?redirect=/join/${token}`)
-    }
-  }, [isLoggedIn, router, token])
-
   let content
 
-  if (!isLoggedIn) {
+  // Show a spinner while we're doing the silent refresh check
+  if (authState === 'checking' || authState === 'unauthenticated') {
     content = (
       <div className="flex justify-center items-center h-40">
         <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
@@ -92,7 +117,7 @@ export default function JoinWorkspacePage({ params }: { params: { token: string 
       </div>
     )
   } else {
-    // Valid invite
+    // Valid invite — show the Accept button
     const invite = data
     content = (
       <div className="text-center space-y-6">

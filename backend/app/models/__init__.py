@@ -21,6 +21,10 @@ from app.models.tag import Tag
 from app.models.time_entry import TimeEntry
 from app.models.time_entry_tag import TimeEntryTag
 
+# Phase 6 Models
+from app.models.timesheet_submission import TimesheetSubmission
+from app.models.submission_entry import SubmissionEntry
+
 __all__ = [
     "User",
     "PasswordResetToken",
@@ -36,4 +40,6 @@ __all__ = [
     "Tag",
     "TimeEntry",
     "TimeEntryTag",
+    "TimesheetSubmission",
+    "SubmissionEntry",
 ]

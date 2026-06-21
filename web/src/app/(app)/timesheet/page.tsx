@@ -16,11 +16,12 @@ import { useState, useMemo } from 'react'
 import { ChevronLeft, ChevronRight, Plus, Pencil, Send } from 'lucide-react'
 import { useWorkspaceStore } from '@/stores/workspace-store'
 import { useTimeEntries, useCreateEntry, useUpdateEntry, useSubmitEntries } from '@/features/time-entries/hooks'
-import { useWorkspace } from '@/features/settings/hooks'
+import { useWorkspace, useMe } from '@/features/settings/hooks'
 import { useProjects, useTasks } from '@/features/projects/hooks'
 import { formatDuration, cn } from '@/lib/utils'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { SubmitWeekButton } from '@/features/time-entries/components/SubmitWeekButton'
 import type { TimeEntry } from '@/features/time-entries/api'
 import {
   AlertDialog,
@@ -249,8 +250,13 @@ function AddEntrySheet({ day, projectId, taskId, onClose, workspaceId, workspace
   const { data: projectsData } = useProjects()
   const projects = projectsData?.data ?? []
   
+  const { data: me } = useMe()
+  
   const { data: tasksData } = useTasks(selProjectId || undefined)
-  const tasks = selProjectId ? (tasksData?.data ?? []) : []
+  const tasks = useMemo(() => {
+    const allTasks = selProjectId ? (tasksData?.data ?? []) : []
+    return allTasks.filter(t => !t.assignee_user_id || t.assignee_user_id === me?.id)
+  }, [tasksData?.data, selProjectId, me?.id])
   
   const selectedProject = projects.find(p => p.id === selProjectId)
 
@@ -436,8 +442,13 @@ function EditEntrySheet({ entry, onClose, workspaceId, workspace }: EditEntryShe
   const { data: projectsData } = useProjects()
   const projects = projectsData?.data ?? []
   
+  const { data: me } = useMe()
+  
   const { data: tasksData } = useTasks(selProjectId || undefined)
-  const tasks = selProjectId ? (tasksData?.data ?? []) : []
+  const tasks = useMemo(() => {
+    const allTasks = selProjectId ? (tasksData?.data ?? []) : []
+    return allTasks.filter(t => !t.assignee_user_id || t.assignee_user_id === me?.id || t.id === entry.task_id)
+  }, [tasksData?.data, selProjectId, me?.id, entry.task_id])
   
   const selectedProject = projects.find(p => p.id === selProjectId)
 
@@ -616,8 +627,11 @@ export default function TimesheetPage() {
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
   const today = new Date()
 
+  const { data: me } = useMe()
+
   const { data: entriesData, isLoading } = useTimeEntries({
     workspace_id: activeWorkspaceId ?? '',
+    user_id: me?.id,
     limit: 200,
     date_from: toDateStr(weekStart),
     date_to: toDateStr(weekEnd),
@@ -684,26 +698,11 @@ export default function TimesheetPage() {
         </div>
 
         {/* Submit Week button */}
-        <button
-          id="submit-week-button"
-          disabled={!canSubmit}
-          onClick={() => canSubmit && setShowSubmit(true)}
-          title={!canSubmit ? 'No draft entries to submit' : `Submit ${draftCount} draft ${draftCount === 1 ? 'entry' : 'entries'}`}
-          className={cn(
-            'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
-            canSubmit
-              ? 'bg-[hsl(var(--status-pending))] text-white hover:opacity-90'
-              : 'bg-muted text-muted-foreground cursor-not-allowed opacity-50',
-          )}
-        >
-          <Send className="w-3.5 h-3.5" />
-          Submit Week
-          {canSubmit && (
-            <span className="ml-1 bg-white/20 text-white rounded-full px-1.5 py-0.5 text-[10px] font-bold">
-              {draftCount}
-            </span>
-          )}
-        </button>
+        <SubmitWeekButton 
+          weekStart={toDateStr(weekStart)} 
+          draftCount={draftCount} 
+          hasWorkflowEnabled={workspace?.approval_workflow_enabled ?? false} 
+        />
       </div>
 
       {/* ── Grid ── */}

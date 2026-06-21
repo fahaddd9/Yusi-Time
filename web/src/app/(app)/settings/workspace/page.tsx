@@ -232,6 +232,9 @@ export default function WorkspaceSettingsPage() {
                   <SelectItem value="America/New_York">Eastern Time</SelectItem>
                   <SelectItem value="America/Los_Angeles">Pacific Time</SelectItem>
                   <SelectItem value="Europe/London">London</SelectItem>
+                  <SelectItem value="Asia/Karachi">Pakistan Standard Time (PKT)</SelectItem>
+                  <SelectItem value="Asia/Kolkata">India Standard Time (IST)</SelectItem>
+                  <SelectItem value="Australia/Sydney">Sydney</SelectItem>
                 </SelectContent>
               </Select>
             ) : (

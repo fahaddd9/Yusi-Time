@@ -7,11 +7,11 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useCreateTask, useUpdateTask } from "@/features/projects/hooks"
+import { useCreateTask, useUpdateTask, useProject, useProjectMembers } from "@/features/projects/hooks"
 import { useWorkspaceMembers } from "@/features/settings/hooks"
 import { useWorkspaceStore } from "@/stores/workspace-store"
 import { toast } from "sonner"
-import { useEffect } from "react"
+import { useEffect, useMemo } from "react"
 
 const schema = z.object({
   name: z.string().min(1, "Task name is required"),
@@ -37,6 +37,18 @@ export function CreateTaskDialog({ projectId, open, onOpenChange, initialData }:
   const { activeWorkspaceId } = useWorkspaceStore()
   const { data: membersData } = useWorkspaceMembers(activeWorkspaceId ?? '')
   const members = membersData?.items || []
+  
+  const { data: project } = useProject(projectId)
+  const { data: projectMembersData } = useProjectMembers(projectId)
+
+  const assignableMembers = useMemo(() => {
+    if (!project || project.visibility === 'public') return members
+    return members.filter(m => 
+      m.role === 'admin' || 
+      m.role === 'manager' || 
+      projectMembersData?.some(pm => pm.user_id === m.user_id)
+    )
+  }, [project, members, projectMembersData])
 
   const { register, handleSubmit, reset, control, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -126,17 +138,17 @@ export function CreateTaskDialog({ projectId, open, onOpenChange, initialData }:
               name="assignee_user_id"
               control={control}
               render={({ field }) => (
-                <Select value={field.value || "none"} onValueChange={(val) => field.onChange(val === "none" ? null : val)}>
+              <Select value={field.value || "none"} onValueChange={(val) => field.onChange(val === "none" ? null : val)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select member">
                       {field.value && field.value !== "none"
-                        ? members.find(m => m.user_id === field.value)?.full_name || "Select member"
+                        ? assignableMembers.find(m => m.user_id === field.value)?.full_name || "Select member"
                         : "Unassigned"}
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Unassigned</SelectItem>
-                    {members.map(m => (
+                    {assignableMembers.map(m => (
                       <SelectItem key={m.user_id} value={m.user_id}>{m.full_name}</SelectItem>
                     ))}
                   </SelectContent>

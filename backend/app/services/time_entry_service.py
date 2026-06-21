@@ -757,14 +757,29 @@ async def list_entries(
         query = query.where(TimeEntry.status == status)
     if billable is not None:
         query = query.where(TimeEntry.billable == billable)
+    # Fetch workspace timezone for date filtering
+    from app.models.workspace import Workspace
+    import zoneinfo
+    
+    workspace = await db.get(Workspace, workspace_id)
+    tz_name = workspace.default_timezone if workspace and workspace.default_timezone else "UTC"
+    if tz_name == "UTC":
+        tz = timezone.utc
+    else:
+        tz = zoneinfo.ZoneInfo(tz_name)
+
     if date_from:
-        df = datetime.fromisoformat(date_from).replace(tzinfo=timezone.utc)
-        query = query.where(TimeEntry.start_time >= df)
+        df = datetime.fromisoformat(date_from)
+        df = datetime.combine(df.date(), df.time(), tzinfo=tz)
+        df_utc = df.astimezone(timezone.utc)
+        query = query.where(TimeEntry.start_time >= df_utc)
     if date_to:
-        dt = datetime.fromisoformat(date_to).replace(tzinfo=timezone.utc)
+        dt = datetime.fromisoformat(date_to)
+        dt = datetime.combine(dt.date(), dt.time(), tzinfo=tz)
         # Include the whole day
         dt = dt + timedelta(days=1)
-        query = query.where(TimeEntry.start_time < dt)
+        dt_utc = dt.astimezone(timezone.utc)
+        query = query.where(TimeEntry.start_time < dt_utc)
 
     # Cursor-based pagination
     if cursor:
