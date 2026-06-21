@@ -27,6 +27,28 @@
 
 ## Current Phase Detail
 
+### Phase 6 — Approvals & Notifications — ✅ Completed
+
+#### Steps Completed
+- [x] Step 6.1 — Backend Models: Created `timesheet_submission.py` and `submission_entry.py` to represent submissions safely and immutable state.
+- [x] Step 6.2 — Backend Services & Routers: Implemented `approval_service.py` and `notification_service.py` with full logic for submission generation, approval, rejection, and notification broadcast.
+- [x] Step 6.3 — Phase 6 Tests: Added `test_approvals.py`, `test_approval_service.py`, and `test_notification_service.py` achieving 100% test pass rate for integration logic.
+- [x] Step 6.4 — Frontend API & Hooks: Implemented React Query hooks (`useApprovals`, `useNotifications`) with 3-second real-time polling intervals for snappy UX.
+- [x] Step 6.5 — Frontend Approvals UI: Built `ApprovalList.tsx` and `SubmissionDetailsSheet.tsx` providing Quick Approve/Reject actions and detailed breakdown views.
+- [x] Step 6.6 — Frontend Notifications UI: Redesigned the `NotificationBell.tsx` to use a modern `Popover` interface with glassmorphism, Framer Motion staggered animations, and `ScrollArea` bounds enforcement.
+
+#### Decisions Made
+- Migrated the Notification UI from a full-page side `Sheet` drawer to a contextual `Popover` floating menu to improve aesthetics.
+- Dropped long-polling/WebSockets in favor of aggressive 3-second polling on notifications for near real-time UX without additional infrastructure complexity.
+
+#### Issues / Bugs Discovered and Resolved
+- Fixed Radix `ScrollArea` flex-box height infinite-growth bug by enforcing strict `min-h-0` boundaries.
+- Resolved Base UI `asChild` prop deprecation conflicts and Typescript type alignment within UI elements.
+- Fixed `PopoverContent` absolute positioning overlap issues with internal `X` close buttons.
+- Cleaned up lingering backend lint errors including unused imports and empty f-strings.
+
+---
+
 ### Phase 5 — Continue, Duplicate & Draft — ✅ Completed
 
 #### Steps Completed
