@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation"
 import { tokenStore } from "@/lib/token-store"
 import { authApi } from "@/features/auth/api"
 import { settingsApi } from "@/features/settings/api"
-import { useMe, useWorkspaces } from "@/features/settings/hooks"
+import { useMe, useWorkspaces, useWorkspace } from "@/features/settings/hooks"
 import { useWorkspaceStore } from "@/stores/workspace-store"
+import { useAttendanceStore } from "@/stores/attendance-store"
 import { Sidebar } from "@/features/layout/components/Sidebar"
 import { Menu } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from "@/components/ui/sheet"
@@ -14,6 +15,10 @@ import { Button } from "@/components/ui/button"
 
 import { TimerBar } from '@/features/timer/components/TimerBar'
 import { IdleModal } from '@/features/timer/components/IdleModal'
+import { AttendanceController } from '@/features/attendance/components/AttendanceController'
+import { useDailyProgress } from '@/features/attendance/hooks/useAttendance'
+import { useBeforeUnloadGuard } from '@/features/attendance/hooks/useBeforeUnloadGuard'
+import { useCurrentTimer } from '@/features/time-entries/hooks'
 
 interface WorkspaceMembership {
   workspaceId: string
@@ -28,8 +33,31 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { data: workspacesData, refetch: refetchWorkspaces } = useWorkspaces()
   const [membership, setMembership] = useState<WorkspaceMembership | null>(null)
   const { activeWorkspaceId, setWorkspaceId } = useWorkspaceStore()
+  const { openLogoutGuard } = useAttendanceStore()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [workspaces, setWorkspaces] = useState<any[]>([])
+
+  // Workspace detail for attendance settings (logout guard)
+  const { data: workspaceDetail } = useWorkspace(activeWorkspaceId)
+
+  // Daily progress for logout guard — only fetch for member role when attendance is enabled
+  const currentRole = membership?.role ?? 'viewer'
+  const attendanceEnabled = workspaceDetail?.attendance_enabled ?? false
+  const { data: dailyProgress } = useDailyProgress(
+    activeWorkspaceId ?? '',
+    currentRole === 'member' && attendanceEnabled
+  )
+
+  // Current timer for beforeunload guard
+  const { data: currentEntry } = useCurrentTimer(activeWorkspaceId)
+
+  // F2 Case 3: Tab-close beforeunload guard (Addendum §6.6)
+  useBeforeUnloadGuard({
+    enabled: currentRole === 'member' && attendanceEnabled,
+    timerRunning: !!currentEntry,
+    hoursLogged: dailyProgress?.hours_logged_today ?? 0,
+    dailyRequiredHours: dailyProgress?.daily_required_hours ?? null,
+  })
 
   useEffect(() => {
     if (workspacesData && workspacesData.length > 0) {
@@ -85,13 +113,30 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const handleLogout = async () => {
+  const doLogout = async () => {
     try {
       await authApi.logout()
     } finally {
       tokenStore.clearAccessToken()
       router.push("/login")
     }
+  }
+
+  const handleLogout = () => {
+    // F2 — soft-block logout when Member is below daily target (Addendum §2.3, §6.5)
+    if (
+      currentRole === 'member' &&
+      attendanceEnabled &&
+      dailyProgress?.daily_required_hours != null &&
+      dailyProgress.hours_logged_today < dailyProgress.daily_required_hours
+    ) {
+      openLogoutGuard(
+        { logged: dailyProgress.hours_logged_today, required: dailyProgress.daily_required_hours },
+        doLogout
+      )
+      return
+    }
+    doLogout()
   }
 
   const handleWorkspaceChange = (wsId: string) => {
@@ -190,6 +235,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </main>
       </div>
       <IdleModal />
+      <AttendanceController />
     </div>
   )
 }

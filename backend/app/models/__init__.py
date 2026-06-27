@@ -25,6 +25,10 @@ from app.models.time_entry_tag import TimeEntryTag
 from app.models.timesheet_submission import TimesheetSubmission
 from app.models.submission_entry import SubmissionEntry
 
+# Phase 6.5 Models — Addendum §3.1, §3.2, §3.3
+from app.models.attendance_notification import AttendanceNotification
+from app.models.push_subscription import PushSubscription
+
 __all__ = [
     "User",
     "PasswordResetToken",
@@ -42,4 +46,6 @@ __all__ = [
     "TimeEntryTag",
     "TimesheetSubmission",
     "SubmissionEntry",
+    "AttendanceNotification",
+    "PushSubscription",
 ]

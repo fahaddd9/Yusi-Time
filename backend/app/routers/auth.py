@@ -88,6 +88,7 @@ async def signup(
         email=body.email,
         password=body.password,
         full_name=body.full_name,
+        timezone=body.timezone,
     )
     _set_refresh_cookie(response, result["refresh_token"])
     return SignupResponse(

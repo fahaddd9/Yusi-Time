@@ -19,11 +19,12 @@ import { Play, Square, Clock, DollarSign } from 'lucide-react'
 import { useWorkspaceStore } from '@/stores/workspace-store'
 import { useTimerStore } from '@/stores/timer-store'
 import { useCurrentTimer, useStartTimer, useStopTimer } from '@/features/time-entries/hooks'
-import { useIdleDetector } from '@/features/timer/hooks/useIdleDetector'
+import { useIdleDetector, requestNativeIdlePermission } from '@/features/timer/hooks/useIdleDetector'
 import { useDescriptionDraft } from '@/features/timer/hooks/useDescriptionDraft'
-import { useMe, useWorkspace } from '@/features/settings/hooks'
+import { useMe, useWorkspace, useWorkspaces } from '@/features/settings/hooks'
 import { useProjects, useTasks, useTags } from '@/features/projects/hooks'
 import { NotificationBell } from '@/features/notifications/components/NotificationBell'
+import { useDailyProgress } from '@/features/attendance/hooks/useAttendance'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   DropdownMenu,
@@ -71,6 +72,7 @@ export function TimerBar() {
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([])
   const [billable, setBillable] = useState(true)
   const [showSwitchDialog, setShowSwitchDialog] = useState(false)
+  const [showStopGuard, setShowStopGuard] = useState(false)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   // Fetch projects and tasks
@@ -105,6 +107,17 @@ export function TimerBar() {
   // Get workspace idle settings from WorkspaceDetail (has idle_detection_enabled)
   const idleEnabled = workspaceDetail?.idle_detection_enabled ?? false
   const idleTimeoutMs = (workspaceDetail?.idle_timeout_minutes ?? 15) * 60_000
+
+  // Daily progress badge (F2) — Member only, 30s poll
+  const { data: workspacesData } = useWorkspaces()
+  const activeWs = workspacesData?.find((w: any) => w.id === activeWorkspaceId)
+  const isMember = activeWs?.role === 'member'
+  const attendanceEnabled = workspaceDetail?.attendance_enabled ?? false
+  const { data: dailyProgress } = useDailyProgress(
+    activeWorkspaceId ?? '',
+    // Only fetch for Member role when attendance is enabled — avoid 403s for Admin/Manager
+    isMember && attendanceEnabled
+  )
 
   // Draft hook
   const { getDraft, saveDraft, clearDraft } = useDescriptionDraft({
@@ -164,6 +177,10 @@ export function TimerBar() {
 
   const doStartTimer = useCallback(async (force: boolean) => {
     if (!selectedProjectId) return
+
+    // F4 (Addendum §2.5): Native IdleDetector permission is now handled entirely
+    // via the Profile Settings page toggle. We no longer prompt here on timer start.
+
     await startTimer.mutateAsync({
       project_id: selectedProjectId,
       task_id: selectedTaskId,
@@ -173,9 +190,8 @@ export function TimerBar() {
       force,
     })
     clearDraft()
-    setDescription('')
     setShowSwitchDialog(false)
-  }, [selectedProjectId, selectedTaskId, description, billable, selectedTagIds, startTimer, clearDraft])
+  }, [selectedProjectId, selectedTaskId, description, billable, selectedTagIds, startTimer, clearDraft, idleEnabled])
 
   const handleStart = useCallback(async () => {
     if (!selectedProjectId) return
@@ -188,12 +204,32 @@ export function TimerBar() {
 
   const handleStop = useCallback(async () => {
     if (!currentEntry) return
+
+    const totalLoggedHours =
+      (dailyProgress?.hours_logged_today ?? 0) + (elapsed / 3600)
+
+    // F2 — soft-block if Member is below daily target (Addendum §2.3, §6.5)
+    if (
+      isMember &&
+      attendanceEnabled &&
+      dailyProgress?.daily_required_hours != null &&
+      totalLoggedHours < dailyProgress.daily_required_hours
+    ) {
+      setShowStopGuard(true)
+      return
+    }
+    await doStopTimer()
+  }, [currentEntry, isMember, attendanceEnabled, dailyProgress])
+
+  const doStopTimer = useCallback(async () => {
+    if (!currentEntry) return
     await stopTimer.mutateAsync({
       entryId: currentEntry.id,
       payload: {},
     })
     clearDraft()
     setDescription('')
+    setShowStopGuard(false)
   }, [currentEntry, stopTimer, clearDraft])
 
   const isRunning = !!currentEntry
@@ -204,7 +240,7 @@ export function TimerBar() {
   return (
     <div
       className={cn(
-        'flex items-center gap-3 px-4 py-2.5 border-b border-border bg-card',
+        'flex flex-wrap items-center gap-y-2 gap-x-3 px-4 py-2 border-b border-border bg-card',
         'transition-colors duration-200',
         isIdle && 'bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800',
       )}
@@ -250,7 +286,7 @@ export function TimerBar() {
         }}
         disabled={isRunning}
         className={cn(
-          'flex-1 min-w-[200px] text-sm bg-transparent outline-none placeholder:text-muted-foreground/60',
+          'flex-1 min-w-[150px] text-sm bg-transparent outline-none placeholder:text-muted-foreground/60',
           'border-b border-transparent focus:border-border transition-colors',
           'disabled:cursor-default disabled:opacity-70',
         )}
@@ -261,7 +297,7 @@ export function TimerBar() {
       {/* ── Project / Task Selectors (Always visible) ── */}
       <div className="flex items-center gap-2">
           <Select value={selectedProjectId ?? ''} onValueChange={setSelectedProjectId}>
-            <SelectTrigger className="w-[160px] border-none bg-accent/50 hover:bg-accent">
+            <SelectTrigger className="w-[130px] lg:w-[160px] border-none bg-accent/50 hover:bg-accent flex-shrink-0">
               <SelectValue placeholder="Select project…" className="min-w-0">
                 {selectedProjectId && projects.find((p) => p.id === selectedProjectId) ? (
                   <div className="flex items-center gap-2 overflow-hidden min-w-0 w-full">
@@ -296,7 +332,7 @@ export function TimerBar() {
             onValueChange={setSelectedTaskId}
             disabled={!selectedProjectId || tasks.length === 0}
           >
-            <SelectTrigger className="w-[140px] border-none bg-accent/50 hover:bg-accent">
+            <SelectTrigger className="w-[120px] lg:w-[140px] border-none bg-accent/50 hover:bg-accent flex-shrink-0">
               <SelectValue placeholder="Select task…" className="min-w-0">
                 {selectedTaskId && tasks.find((t) => t.id === selectedTaskId) ? (
                   <span className="truncate block w-full text-left">{tasks.find((t) => t.id === selectedTaskId)?.name}</span>
@@ -415,24 +451,60 @@ export function TimerBar() {
       )}
 
       {/* ── Running entry info (project name / billable amount) ── */}
-      {isRunning && currentEntry && (
-        <div className="hidden md:flex items-center gap-2 text-xs text-muted-foreground border-l border-border pl-3">
-          <span
-            className="inline-block w-2 h-2 rounded-full flex-shrink-0"
-            style={{ backgroundColor: currentEntry.project_color ?? '#6B7280' }}
-          />
-          <span className="truncate max-w-[140px]">{currentEntry.project_name}</span>
+      {isRunning && currentEntry && (!isCurrentProjectRunning || currentEntry.billable_amount) && (
+        <div className="hidden md:flex items-center gap-2 text-xs text-muted-foreground border-l border-border pl-3 flex-shrink-0">
+          {!isCurrentProjectRunning && (
+            <>
+              <span
+                className="inline-block w-2 h-2 rounded-full flex-shrink-0"
+                style={{ backgroundColor: currentEntry.project_color ?? '#6B7280' }}
+              />
+              <span className="truncate max-w-[100px] lg:max-w-[140px]">{currentEntry.project_name}</span>
+            </>
+          )}
           {currentEntry.billable_amount && (
             <span className="font-medium text-[#F06900]">${currentEntry.billable_amount}</span>
           )}
         </div>
       )}
 
-      {/* ── Spacer to push NotificationBell to the right ── */}
-      <div className="flex-1" />
+      {/* ── Spacer to push right section to the right ── */}
+      <div className="flex-1 min-w-[auto] hidden md:block" />
 
-      {/* ── Notification Bell ── */}
-      <NotificationBell />
+      <div className="flex items-center gap-3 ml-auto flex-shrink-0">
+        {/* ── Daily Progress Badge (F2) — Member role only ── */}
+        {isMember && attendanceEnabled && dailyProgress?.daily_required_hours != null && (
+          <div
+            id="timer-daily-progress-badge"
+            title={`Today: ${((dailyProgress?.hours_logged_today ?? 0) + (isRunning ? elapsed / 3600 : 0)).toFixed(1)}h logged of ${dailyProgress.daily_required_hours}h required${dailyProgress.on_pace ? ' — on pace ✓' : ' — falling behind'}`}
+            className={cn(
+              'flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-mono font-medium transition-colors',
+              dailyProgress.on_pace
+                ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400'
+                : 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400'
+            )}
+            role="status"
+            aria-label={`Daily progress: ${dailyProgress.hours_logged_today.toFixed(1)} of ${dailyProgress.daily_required_hours} hours logged today`}
+          >
+            <span
+              className={cn(
+                'w-1.5 h-1.5 rounded-full',
+                dailyProgress.on_pace ? 'bg-emerald-500' : 'bg-amber-500'
+              )}
+            />
+            <span>
+              {((dailyProgress?.hours_logged_today ?? 0) + (isRunning ? elapsed / 3600 : 0)).toFixed(1)}h
+              <span className="mx-0.5 opacity-50">/</span>
+              {dailyProgress.daily_required_hours}h
+            </span>
+          </div>
+        )}
+
+        {/* ── Notification Bell ── */}
+        <NotificationBell />
+      </div>
+
+
 
       {/* ── Switch Timer Confirmation Dialog ── */}
       <AlertDialog open={showSwitchDialog} onOpenChange={setShowSwitchDialog}>
@@ -454,6 +526,34 @@ export function TimerBar() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* ── Stop Timer Guard (F2) — below daily target ── */}
+      {dailyProgress?.daily_required_hours != null && (
+        <AlertDialog open={showStopGuard} onOpenChange={setShowStopGuard}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Stop tracking early?</AlertDialogTitle>
+              <AlertDialogDescription>
+                You've logged{' '}
+                <span className="font-semibold font-mono">{((dailyProgress?.hours_logged_today ?? 0) + (elapsed / 3600)).toFixed(1)}h</span>{' '}
+                of your{' '}
+                <span className="font-semibold font-mono">{dailyProgress.daily_required_hours}h</span>{' '}
+                daily target. Stop tracking anyway?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Keep Tracking</AlertDialogCancel>
+              <AlertDialogAction
+                id="stop-guard-confirm"
+                className="bg-destructive text-white hover:bg-destructive/90"
+                onClick={doStopTimer}
+              >
+                Stop Anyway
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </div>
   )
 }

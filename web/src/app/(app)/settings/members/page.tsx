@@ -15,7 +15,6 @@ import type { InviteCreateRequest, InviteResponse } from '@/features/settings/ap
 import { cn } from '@/lib/utils'
 
 // shadcn UI
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import {
   Table,
   TableBody,
@@ -69,29 +68,23 @@ import {
   Clock,
   Loader2,
   UserPlus,
-  Link as LinkIcon
+  Link as LinkIcon,
+  UserCircle2
 } from 'lucide-react'
 import { format, parseISO } from 'date-fns'
-
-function PageHeader({ title }: { title: string }) {
-  return (
-    <div className="mb-6 flex items-center justify-between">
-      <h1 className="text-2xl font-semibold text-foreground">{title}</h1>
-    </div>
-  )
-}
+import { PageHeader } from '@/components/ui/setting-row'
 
 function RoleBadge({ role }: { role: string }) {
   let classes = ''
   switch (role) {
     case 'admin':
-      classes = 'bg-primary/10 text-primary border-primary/20'
+      classes = 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-500/10 dark:text-purple-400 dark:border-purple-500/20'
       break
     case 'manager':
-      classes = 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20'
+      classes = 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20'
       break
     case 'member':
-      classes = 'bg-muted text-muted-foreground border-border'
+      classes = 'bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-500/10 dark:text-slate-400 dark:border-slate-500/20'
       break
     case 'viewer':
       classes = 'bg-transparent text-muted-foreground border-dashed border-border'
@@ -101,7 +94,7 @@ function RoleBadge({ role }: { role: string }) {
   }
 
   return (
-    <Badge variant="outline" className={cn('text-xs capitalize', classes)}>
+    <Badge variant="outline" className={cn('text-[11px] px-2 py-0.5 rounded-full capitalize font-medium', classes)}>
       {role}
     </Badge>
   )
@@ -137,8 +130,6 @@ export default function MembersPage() {
   const [copied, setCopied] = useState(false)
 
   const handleCreateInvite = () => {
-    // API only strictly typed to manager/member/viewer in the interface, but Admin can invite Admin
-    // Type casting to bypass strict union if necessary, but we assume it's allowed
     const data = { email: inviteEmail, role: inviteRole } as any
     createInviteMutation.mutate(data, {
       onSuccess: (response) => {
@@ -168,152 +159,157 @@ export default function MembersPage() {
   }
 
   return (
-    <div className="max-w-4xl">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold text-foreground">Workspace Members</h1>
-        {isAdmin && (
-          <Dialog open={isInviteOpen} onOpenChange={(open) => {
-            setIsInviteOpen(open)
-            if (!open) {
-              setCreatedInvite(null)
-              setInviteEmail('')
-              setInviteRole('member')
-            }
-          }}>
-            <DialogTrigger render={
-              <Button className="bg-primary hover:bg-primary/90 text-white shadow-[0_0_15px_rgba(254,105,0,0.3)]">
-                <UserPlus className="w-4 h-4 mr-2" />
-                Invite Member
-              </Button>
-            } />
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle>Invite new member</DialogTitle>
-              </DialogHeader>
-              {!createdInvite ? (
-                <div className="py-4 space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="invite-email">Email Address</Label>
-                    <Input
-                      id="invite-email"
-                      type="email"
-                      value={inviteEmail}
-                      onChange={(e) => setInviteEmail(e.target.value)}
-                      placeholder="colleague@company.com"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Role</Label>
-                    <Select value={inviteRole} onValueChange={(v) => v && setInviteRole(v as any)}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="admin">Admin</SelectItem>
-                        <SelectItem value="manager">Manager</SelectItem>
-                        <SelectItem value="member">Member</SelectItem>
-                        <SelectItem value="viewer">Viewer</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <p className="text-xs text-muted-foreground pt-1">
-                      {inviteRole === 'admin' && 'Full access to all settings and billing.'}
-                      {inviteRole === 'manager' && 'Can manage projects, approvals, and members.'}
-                      {inviteRole === 'member' && 'Can track time and view their own reports.'}
-                      {inviteRole === 'viewer' && 'Read-only access to workspace data.'}
-                    </p>
-                  </div>
-                  <Button
-                    onClick={handleCreateInvite}
-                    disabled={!inviteEmail || createInviteMutation.isPending}
-                    className="w-full bg-primary hover:bg-primary/90 text-white"
-                  >
-                    {createInviteMutation.isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-                    Send Invite
-                  </Button>
-                </div>
-              ) : (
-                <div className="py-4 space-y-4 min-w-0">
-                  <div className="flex items-start gap-3 p-3 bg-success/10 border border-success/20 rounded-lg min-w-0">
-                    <Check className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground">Invite created!</p>
-                      <p className="text-xs text-muted-foreground">
-                        Share this link with <strong>{createdInvite.invite.email}</strong>.
-                      </p>
-                      <div className="flex items-center gap-2 mt-2 min-w-0">
-                        <code className="text-xs bg-muted px-2 py-1 rounded truncate flex-1 font-mono min-w-0">
-                          {createdInvite.inviteUrl}
-                        </code>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="flex-shrink-0"
-                          onClick={() => handleCopyLink(createdInvite.inviteUrl)}
-                        >
-                          {copied ? (
-                            <><Check className="w-3.5 h-3.5 mr-1.5 text-success" />Copied!</>
-                          ) : (
-                            <><Copy className="w-3.5 h-3.5 mr-1.5" />Copy</>
-                          )}
-                        </Button>
-                      </div>
-                      <p className="text-xs text-warning mt-2 flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        Expires on {format(parseISO(createdInvite.invite.expires_at), 'MMM d, yyyy')}
+    <div className="space-y-12 pb-12">
+      <section>
+        <PageHeader 
+          title="Team Members" 
+          description="Manage who has access to this workspace and their roles."
+        >
+          {isAdmin && (
+            <Dialog open={isInviteOpen} onOpenChange={(open) => {
+              setIsInviteOpen(open)
+              if (!open) {
+                setCreatedInvite(null)
+                setInviteEmail('')
+                setInviteRole('member')
+              }
+            }}>
+              <DialogTrigger render={
+                <Button className="bg-brand-orange hover:bg-brand-orange/90 text-white shadow-sm rounded-lg">
+                  <UserPlus className="w-4 h-4 mr-2" />
+                  Invite member
+                </Button>
+              } />
+              <DialogContent className="sm:max-w-md rounded-2xl">
+                <DialogHeader>
+                  <DialogTitle>Invite new member</DialogTitle>
+                </DialogHeader>
+                {!createdInvite ? (
+                  <div className="py-4 space-y-5">
+                    <div className="space-y-2">
+                      <Label htmlFor="invite-email" className="text-sm font-medium">Email address</Label>
+                      <Input
+                        id="invite-email"
+                        type="email"
+                        value={inviteEmail}
+                        onChange={(e) => setInviteEmail(e.target.value)}
+                        placeholder="colleague@company.com"
+                        className="focus-visible:ring-brand-orange/50"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Role</Label>
+                      <Select value={inviteRole} onValueChange={(v) => v && setInviteRole(v as any)}>
+                        <SelectTrigger className="focus-visible:ring-brand-orange/50">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="admin">Admin</SelectItem>
+                          <SelectItem value="manager">Manager</SelectItem>
+                          <SelectItem value="member">Member</SelectItem>
+                          <SelectItem value="viewer">Viewer</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-[13px] text-muted-foreground pt-1.5 leading-relaxed">
+                        {inviteRole === 'admin' && 'Full access to all settings, billing, and workspace management.'}
+                        {inviteRole === 'manager' && 'Can manage projects, approve timesheets, and invite members.'}
+                        {inviteRole === 'member' && 'Can track time and view their own reports and assigned projects.'}
+                        {inviteRole === 'viewer' && 'Read-only access to workspace data.'}
                       </p>
                     </div>
+                    <Button
+                      onClick={handleCreateInvite}
+                      disabled={!inviteEmail || createInviteMutation.isPending}
+                      className="w-full bg-brand-orange hover:bg-brand-orange/90 text-white rounded-lg mt-2"
+                    >
+                      {createInviteMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                      Send invite
+                    </Button>
                   </div>
-                  <DialogClose render={<Button variant="outline" className="w-full">Done</Button>} />
-                </div>
-              )}
-            </DialogContent>
-          </Dialog>
-        )}
-      </div>
+                ) : (
+                  <div className="py-4 space-y-4 min-w-0">
+                    <div className="flex items-start gap-3 p-4 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-xl min-w-0">
+                      <Check className="w-5 h-5 text-emerald-600 dark:text-emerald-400 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-foreground">Invite created successfully!</p>
+                        <p className="text-[13px] text-muted-foreground mt-1">
+                          Share this link with <strong>{createdInvite.invite.email}</strong> to join.
+                        </p>
+                        <div className="flex items-center gap-2 mt-3 min-w-0">
+                          <code className="text-xs bg-white dark:bg-black/20 border border-border px-2 py-1.5 rounded-md truncate flex-1 font-mono min-w-0 select-all">
+                            {createdInvite.inviteUrl}
+                          </code>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex-shrink-0 h-8"
+                            onClick={() => handleCopyLink(createdInvite.inviteUrl)}
+                          >
+                            {copied ? (
+                              <><Check className="w-3.5 h-3.5 mr-1.5 text-emerald-500" />Copied!</>
+                            ) : (
+                              <><Copy className="w-3.5 h-3.5 mr-1.5" />Copy</>
+                            )}
+                          </Button>
+                        </div>
+                        <p className="text-xs text-amber-600 dark:text-amber-400 mt-3 flex items-center gap-1 font-medium">
+                          <Clock className="w-3.5 h-3.5" />
+                          Link expires on {format(parseISO(createdInvite.invite.expires_at), 'MMM d, yyyy')}
+                        </p>
+                      </div>
+                    </div>
+                    <DialogClose render={<Button variant="outline" className="w-full rounded-lg">Done</Button>} />
+                  </div>
+                )}
+              </DialogContent>
+            </Dialog>
+          )}
+        </PageHeader>
 
-      {/* SECTION 1: Active Members */}
-      <Card className="mb-6">
-        <CardHeader className="pb-0 border-b border-border/50">
-          <CardTitle className="text-title pb-4">Active Members</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
+        <div className="bg-white dark:bg-card rounded-2xl shadow-sm border border-border/60 overflow-hidden">
           {membersLoading ? (
             <div className="p-6 space-y-4">
-              {[1, 2, 3].map((i) => <Skeleton key={i} className="h-12 w-full" />)}
+              {[1, 2, 3].map((i) => <Skeleton key={i} className="h-12 w-full rounded-lg" />)}
             </div>
           ) : (
             <Table>
-              <TableHeader>
-                <TableRow className="hover:bg-transparent">
-                  <TableHead className="w-[40%]">User</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Joined</TableHead>
-                  <TableHead className="w-24 text-right">Actions</TableHead>
+              <TableHeader className="bg-muted/30">
+                <TableRow className="hover:bg-transparent border-b-border/60">
+                  <TableHead className="w-[45%] font-medium">Member</TableHead>
+                  <TableHead className="font-medium">Role</TableHead>
+                  <TableHead className="font-medium">Date joined</TableHead>
+                  <TableHead className="w-24 text-right font-medium">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {membersData?.items.map((member) => (
-                  <TableRow key={member.user_id}>
+                  <TableRow key={member.user_id} className="border-b-border/40 hover:bg-muted/20 transition-colors">
                     <TableCell>
-                      <div className="flex flex-col">
-                        <span className="text-sm font-medium text-foreground">{member.full_name}</span>
-                        <span className="text-xs text-muted-foreground">{member.email}</span>
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center border border-border/60 text-muted-foreground flex-shrink-0">
+                          {/* Fallback to initials if avatar logic existed, else User icon */}
+                          <UserCircle2 className="w-5 h-5 opacity-50" />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium text-foreground">{member.full_name}</span>
+                          <span className="text-xs text-muted-foreground">{member.email}</span>
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell>
                       {isAdmin && member.role !== 'admin' ? (
                         <DropdownMenu>
                           <DropdownMenuTrigger render={
-                            <Button variant="ghost" size="sm" className="h-8 px-2 -ml-2 hover:bg-surface-raised font-normal">
+                            <Button variant="ghost" size="sm" className="h-7 px-2 -ml-2 hover:bg-muted font-normal focus-visible:ring-brand-orange/50">
                               <RoleBadge role={member.role} />
-                              <ChevronDown className="w-3 h-3 ml-1 text-muted-foreground" />
+                              <ChevronDown className="w-3 h-3 ml-1.5 text-muted-foreground opacity-50" />
                             </Button>
                           } />
-                          <DropdownMenuContent align="start">
+                          <DropdownMenuContent align="start" className="rounded-xl">
                             {(['admin', 'manager', 'member', 'viewer'] as const).map((r) => (
                               <DropdownMenuItem
                                 key={r}
-                                className="capitalize cursor-pointer"
+                                className="capitalize cursor-pointer rounded-lg"
                                 onClick={() => changeRoleMutation.mutate({ userId: member.user_id, newRole: r })}
                               >
                                 {r}
@@ -333,7 +329,7 @@ export default function MembersPage() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                          className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors rounded-lg"
                           onClick={() => {
                             setRemovingUserId(member.user_id)
                             setRemovingUserName(member.full_name)
@@ -343,14 +339,14 @@ export default function MembersPage() {
                           <UserMinus className="w-4 h-4" />
                         </Button>
                       ) : (
-                        <span className="text-xs text-muted-foreground opacity-50 px-2">—</span>
+                        <span className="text-xs text-muted-foreground opacity-30 px-2">—</span>
                       )}
                     </TableCell>
                   </TableRow>
                 ))}
                 {(!membersData?.items || membersData.items.length === 0) && (
                   <TableRow>
-                    <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+                    <TableCell colSpan={4} className="h-32 text-center text-muted-foreground text-sm">
                       No members found.
                     </TableCell>
                   </TableRow>
@@ -358,28 +354,29 @@ export default function MembersPage() {
               </TableBody>
             </Table>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </section>
 
       {/* SECTION 2: Pending Invites */}
       {isAdmin && invitesData && invitesData.items.length > 0 && (
-        <Card>
-          <CardHeader className="pb-0 border-b border-border/50">
-            <CardTitle className="text-title pb-4">Pending Invites</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
+        <section>
+          <PageHeader 
+            title="Pending Invites" 
+            description="Invitations that have not been accepted yet." 
+          />
+          <div className="bg-white dark:bg-card rounded-2xl shadow-sm border border-border/60 overflow-hidden">
             <Table>
-              <TableHeader>
-                <TableRow className="hover:bg-transparent">
-                  <TableHead className="w-[40%]">Email</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Expires</TableHead>
-                  <TableHead className="w-24 text-right">Action</TableHead>
+              <TableHeader className="bg-muted/30">
+                <TableRow className="hover:bg-transparent border-b-border/60">
+                  <TableHead className="w-[45%] font-medium">Email address</TableHead>
+                  <TableHead className="font-medium">Role</TableHead>
+                  <TableHead className="font-medium">Expires</TableHead>
+                  <TableHead className="w-24 text-right font-medium">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {invitesData.items.map((invite) => (
-                  <TableRow key={invite.id}>
+                  <TableRow key={invite.id} className="border-b-border/40 hover:bg-muted/20 transition-colors">
                     <TableCell className="text-sm font-medium text-foreground">
                       {invite.email}
                     </TableCell>
@@ -387,35 +384,35 @@ export default function MembersPage() {
                       <RoleBadge role={invite.role} />
                     </TableCell>
                     <TableCell>
-                      <div className="flex flex-col gap-0.5">
+                      <div className="flex flex-col gap-1">
                         <span className="text-sm text-muted-foreground tabular-nums">
                           {format(parseISO(invite.expires_at), 'MMM d, yyyy')}
                         </span>
                         {new Date(invite.expires_at) < new Date(Date.now() + 2 * 24 * 60 * 60 * 1000) && (
-                          <span className="text-[10px] text-warning bg-warning-muted rounded px-1.5 py-0.5 w-fit font-medium">
+                          <span className="text-[10px] text-amber-700 bg-amber-50 dark:bg-amber-500/10 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20 rounded-full px-2 py-0.5 w-fit font-medium">
                             Expiring soon
                           </span>
                         )}
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
+                      <div className="flex items-center justify-end gap-1">
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                          className="h-8 w-8 text-muted-foreground hover:text-foreground rounded-lg"
                           onClick={() => {
                             const inviteUrl = `${window.location.origin}/join/${invite.token}`
                             handleCopyLink(inviteUrl)
                           }}
-                          aria-label="Copy invite link"
+                          title="Copy invite link"
                         >
                           <LinkIcon className="w-4 h-4" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 px-3 text-xs"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 px-3 text-xs rounded-lg font-medium"
                           onClick={() => revokeInviteMutation.mutate(invite.token)}
                           disabled={revokeInviteMutation.isPending}
                         >
@@ -427,29 +424,29 @@ export default function MembersPage() {
                 ))}
               </TableBody>
             </Table>
-          </CardContent>
-        </Card>
+          </div>
+        </section>
       )}
 
       {/* Remove member confirmation */}
       <AlertDialog open={!!removingUserId} onOpenChange={(open) => !open && setRemovingUserId(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-2xl">
           <AlertDialogHeader>
-            <AlertDialogTitle>Remove Member</AlertDialogTitle>
+            <AlertDialogTitle>Remove Team Member</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to remove <strong>{removingUserName}</strong> from this workspace?
-              They will lose access immediately.
+              They will lose access immediately. Time entries logged by this user will remain.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel className="rounded-lg">Cancel</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-lg"
               onClick={handleConfirmRemove}
               disabled={removeMemberMutation.isPending}
             >
               {removeMemberMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-              Remove
+              Remove member
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

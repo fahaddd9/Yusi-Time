@@ -19,6 +19,7 @@ class SignupRequest(BaseModel):
     email: EmailStr
     password: str = Field(..., min_length=8, max_length=72)
     full_name: str = Field(..., min_length=2, max_length=200)
+    timezone: Optional[str] = None
 
     @field_validator("email", mode="before")
     @classmethod

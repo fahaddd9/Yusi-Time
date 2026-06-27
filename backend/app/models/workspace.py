@@ -1,9 +1,14 @@
 """
-Workspace model — maps to `workspaces` table (DB Schema v2.0 §4.3).
+Workspace model — maps to `workspaces` table (DB Schema v2.0 §4.3,
+Addendum §3.1 — Phase 6.5 columns: attendance_enabled, attendance_mode,
+work_start_time, daily_required_hours, off_days, is_billable).
 
 Business rules enforced here:
   - rounding_interval_minutes IS NOT NULL when rounding_mode != 'none' (CHECK)
   - idle_timeout_minutes IS NOT NULL when idle_detection_enabled = TRUE (CHECK)
+  - attendance_mode IN ('fixed_schedule','flexible_hours') (CHECK)
+  - daily_required_hours > 0 when not NULL (CHECK)
+  - is_billable default=true; existing workspaces remain billable (PRD-ADD-05)
   - Soft-deleted via deleted_at; hard deletion by a scheduled job after 30 days
   - Cascades: all workspace-scoped tables ON DELETE CASCADE from this table
 """
@@ -12,8 +17,9 @@ import uuid
 from datetime import datetime
 from sqlalchemy import (
     BigInteger, Boolean, CHAR, CheckConstraint, DateTime,
-    Enum, Integer, SmallInteger, Text, func,
+    Enum, Integer, Numeric, SmallInteger, Text, Time, func,
 )
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base, TimestampMixin
@@ -87,6 +93,39 @@ class Workspace(Base, TimestampMixin):
         DateTime(timezone=True), nullable=True
     )
 
+    # ── Phase 6.5 Columns — Addendum §3.1 ────────────────────────────────
+    # Master toggle: when FALSE, no attendance scheduler evaluates this workspace
+    attendance_enabled: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="FALSE"
+    )
+    # Workspace-wide mode — one mode for ALL members, no per-member mixing
+    # (Addendum §2.1, PRD-ADD-02b, §7 Out-of-Scope)
+    attendance_mode: Mapped[str] = mapped_column(
+        Text,
+        nullable=False,
+        default="fixed_schedule",
+        server_default="fixed_schedule",
+    )
+    # HH:MM time — trigger time for F1 prompt (or reminder in Flexible mode)
+    # Stored as TIME without timezone; interpreted in workspace default_timezone
+    work_start_time: Mapped[datetime | None] = mapped_column(
+        Time(timezone=False), nullable=True
+    )
+    # Global daily hour target for all Members (Addendum §2.3, PRD-ADD-02)
+    daily_required_hours: Mapped[float | None] = mapped_column(
+        Numeric(4, 2), nullable=True
+    )
+    # Days of week when F1+F2 are suspended (0=Sunday…6=Saturday)
+    # Default [0] = Sunday only off (Addendum §2.1)
+    off_days: Mapped[list[int]] = mapped_column(
+        ARRAY(Integer), nullable=False, default=[0], server_default="{0}"
+    )
+    # Workspace billable toggle (Addendum §3.1, PRD-ADD-05)
+    # Default TRUE: existing workspaces remain billable; no data is deleted on toggle
+    is_billable: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=True, server_default="TRUE"
+    )
+
     # ── Relationships ──────────────────────────────────────────────────────
     members: Mapped[list["WorkspaceMember"]] = relationship(  # type: ignore[name-defined]  # noqa: F821
         "WorkspaceMember", back_populates="workspace", cascade="all, delete-orphan"
@@ -131,6 +170,15 @@ class Workspace(Base, TimestampMixin):
         CheckConstraint(
             "date_format IN ('MM/DD/YYYY','DD/MM/YYYY')",
             name="ck_workspace_date_format",
+        ),
+        # Phase 6.5 constraints — Addendum §3.1
+        CheckConstraint(
+            "attendance_mode IN ('fixed_schedule', 'flexible_hours')",
+            name="ck_workspace_attendance_mode",
+        ),
+        CheckConstraint(
+            "daily_required_hours IS NULL OR daily_required_hours > 0",
+            name="ck_workspace_daily_hours_positive",
         ),
     )
 

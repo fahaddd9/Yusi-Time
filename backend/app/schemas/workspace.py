@@ -24,7 +24,7 @@ Idle detection rule:
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, time
 from typing import Literal, Optional
 from pydantic import BaseModel, Field, model_validator
 import uuid
@@ -82,6 +82,12 @@ class WorkspaceDetail(BaseModel):
     approval_workflow_enabled: bool
     idle_detection_enabled: bool
     idle_timeout_minutes: Optional[int] = None
+    attendance_enabled: bool
+    attendance_mode: str
+    work_start_time: Optional[time] = None
+    daily_required_hours: Optional[float] = None
+    off_days: list[int]
+    is_billable: bool
     deleted_at: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
@@ -110,6 +116,12 @@ class WorkspaceDetailViewer(BaseModel):
     approval_workflow_enabled: bool
     idle_detection_enabled: bool
     idle_timeout_minutes: Optional[int] = None
+    attendance_enabled: bool
+    attendance_mode: str
+    work_start_time: Optional[time] = None
+    daily_required_hours: Optional[float] = None
+    off_days: list[int]
+    is_billable: bool
     created_at: datetime
     updated_at: datetime
 

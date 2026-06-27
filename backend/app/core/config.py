@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
+from typing import Optional
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
@@ -17,6 +18,16 @@ class Settings(BaseSettings):
     aws_access_key_id: str
     aws_secret_access_key: str
     frontend_url: str
+
+    # ── Phase 6.5 — Web Push / VAPID config (Addendum §5.3, RULE B-07) ──────
+    # Required for F1 browser push notification delivery via Web Push protocol.
+    # Generate VAPID keys with: py-vapid --gen-key
+    # VAPID_CLAIMS_SUBJECT must be a mailto: URI for push service identification.
+    # All three are Optional so the app boots without them in dev/test environments
+    # where push delivery is not exercised; push_service.py checks at send-time.
+    vapid_public_key: Optional[str] = None
+    vapid_private_key: Optional[str] = None
+    vapid_claims_subject: Optional[str] = None  # e.g. "mailto:admin@yusitime.com"
 
 @lru_cache()
 def get_settings():

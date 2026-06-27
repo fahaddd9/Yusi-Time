@@ -5,7 +5,7 @@ from app.core.dependencies import get_db, require_role, get_current_user
 from app.models.user import User
 from app.models.workspace_member import WorkspaceMember
 from app.schemas.notification import NotificationReadRequest
-from app.services import notification_service
+from app.services import notification_service, attendance_service
 
 router = APIRouter(prefix="/notifications", tags=["Notifications"])
 
@@ -46,6 +46,12 @@ async def mark_read(
         user_id=current_user.id,
         notification_ids=request.ids,
     )
+    await attendance_service.mark_read(
+        db=db,
+        user_id=current_user.id,
+        notification_ids=request.ids,
+    )
+    await db.commit()
     return {"message": "Notifications marked as read."}
 
 @router.post("/read-all")
@@ -59,4 +65,10 @@ async def mark_all_read(
         workspace_id=workspace_id,
         user_id=member.user_id,
     )
+    await attendance_service.mark_all_read(
+        db=db,
+        workspace_id=workspace_id,
+        user_id=member.user_id,
+    )
+    await db.commit()
     return {"message": "All notifications marked as read."}

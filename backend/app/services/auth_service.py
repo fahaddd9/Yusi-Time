@@ -45,6 +45,7 @@ async def register(
     email: str,
     password: str,
     full_name: str,
+    timezone: str | None = None,
 ) -> dict:
     """
     Create a new user with their own workspace (admin role).
@@ -81,6 +82,8 @@ async def register(
     db.add(user)
 
     workspace = Workspace(name=f"{full_name}'s Workspace")
+    if timezone:
+        workspace.default_timezone = timezone
     db.add(workspace)
 
     # 4. Flush to get IDs before creating the member join
