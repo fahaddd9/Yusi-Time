@@ -132,6 +132,12 @@ _None — Phase 6.5 implementation complete_ ✅
 - Risk 2 (notifications): dedicated `attendance_notifications` table approved
 - Risk 3 (warning formula): Option B — impossibility check (`seconds_until_midnight < required - logged`)
 
+#### Issues / Bugs Discovered and Resolved
+- Fixed native IdleDetector loop by enforcing the Chromium minimum threshold of 60 seconds.
+- Resolved race condition in the Work Start modal where network polling latency caused the notification to fire after the user manually started tracking.
+- Corrected the Notification Bell schema mapping (`event_metadata` vs `metadata`) so rejection notes are properly rendered inside the dropdown.
+- Fixed TimerBar component to correctly preserve the timer description state without visually wiping it before the server syncs.
+
 ---
 
 ### Phase 6 — Approvals & Notifications — ✅ Completed
