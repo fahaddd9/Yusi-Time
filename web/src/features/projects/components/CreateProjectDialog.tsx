@@ -10,6 +10,8 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useCreateProject, useUpdateProject, useClients } from "@/features/projects/hooks"
+import { useWorkspace } from "@/features/settings/hooks"
+import { useWorkspaceStore } from "@/stores/workspace-store"
 import { ColorPicker } from "@/components/ui/color-picker"
 import { toast } from "sonner"
 import { useEffect } from "react"
@@ -32,11 +34,15 @@ interface Props {
 }
 
 export function CreateProjectDialog({ open, onOpenChange, initialData }: Props) {
+  const { activeWorkspaceId } = useWorkspaceStore()
+  const { data: workspace } = useWorkspace(activeWorkspaceId ?? '')
   const { data: clientsRes } = useClients()
   const clients = clientsRes?.data || []
   const createProject = useCreateProject()
   const updateProject = useUpdateProject()
   const isEditing = !!initialData
+  
+  const isWorkspaceBillable = workspace?.is_billable ?? true
 
   const { register, handleSubmit, control, reset, setError, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -75,8 +81,14 @@ export function CreateProjectDialog({ open, onOpenChange, initialData }: Props) 
   }, [open, initialData, reset])
 
   const onSubmit = (data: FormValues) => {
+    let billable = data.default_billable;
+    if (!isWorkspaceBillable && isEditing) {
+      billable = initialData.default_billable ?? true;
+    }
+
     const payload = {
       ...data,
+      default_billable: billable,
       client_id: data.client_id === "none" ? null : data.client_id,
       budget_hours: data.budget_hours ? parseFloat(data.budget_hours) : null,
     }
@@ -191,9 +203,11 @@ export function CreateProjectDialog({ open, onOpenChange, initialData }: Props) 
 
             <div className="flex flex-row items-center justify-between rounded-lg border border-border p-3 col-span-2 shadow-sm">
               <div className="space-y-0.5">
-                <Label>Default Billable</Label>
+                <Label className={!isWorkspaceBillable ? "text-muted-foreground" : ""}>Default Billable</Label>
                 <p className="text-[13px] text-muted-foreground">
-                  Should tasks in this project be billable by default?
+                  {!isWorkspaceBillable 
+                    ? "Workspace billing is currently disabled."
+                    : "Should tasks in this project be billable by default?"}
                 </p>
               </div>
               <Controller
@@ -201,8 +215,9 @@ export function CreateProjectDialog({ open, onOpenChange, initialData }: Props) 
                 control={control}
                 render={({ field }) => (
                   <Switch
-                    checked={field.value}
+                    checked={!isWorkspaceBillable ? false : field.value}
                     onCheckedChange={field.onChange}
+                    disabled={!isWorkspaceBillable}
                   />
                 )}
               />

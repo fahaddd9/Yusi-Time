@@ -85,15 +85,15 @@ export function Sidebar({
     )}>
       {/* SKILL §6.2 - Logo area */}
       <div className={cn(
-        "flex flex-col gap-3 px-3 py-4 border-b border-sidebar-border h-[5.5rem] justify-center overflow-hidden",
-        !isMobile && "items-center lg:items-start lg:px-4"
+        "flex flex-col gap-2 px-3 pt-4 pb-3 border-b border-sidebar-border",
+        !isMobile && "lg:px-4"
       )}>
         {/* SKILL §1.1 — logo: always use SVG file, never recreate in code */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img 
           src="/logo-dark.svg" 
           alt="Yusi Time" 
-          className={cn("h-8 w-auto flex-shrink-0 dark:block")} 
+          className={cn("h-8 w-auto flex-shrink-0 dark:block self-center")} 
         />
         
         {/* Workspace Switcher */}
@@ -101,9 +101,9 @@ export function Sidebar({
           <div className="hidden lg:block w-full -mx-1">
             <DropdownMenu>
               <DropdownMenuTrigger className="w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-lg">
-                <div className="flex items-center justify-between hover:bg-sidebar-accent transition-colors duration-150 rounded-lg cursor-pointer px-2 py-1.5 w-full">
-                  <span className="text-caption text-sidebar-foreground/60 truncate max-w-[150px] text-left">{workspaceName}</span>
-                  <ChevronDown className="w-3 h-3 text-sidebar-foreground/60 flex-shrink-0 ml-1" />
+                <div className="flex items-center justify-between hover:bg-white/5 transition-all duration-200 rounded-xl cursor-pointer px-3 py-2 w-full border border-transparent hover:border-sidebar-border/50 group">
+                  <span className="text-[15px] font-medium text-sidebar-foreground group-hover:text-white transition-colors truncate max-w-[150px] text-left">{workspaceName}</span>
+                  <ChevronDown className="w-4 h-4 text-sidebar-foreground/60 flex-shrink-0 ml-1 group-hover:text-white transition-colors" />
                 </div>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-[200px] bg-card border-border shadow-lg z-50">
@@ -130,8 +130,8 @@ export function Sidebar({
 
       <nav className="flex-1 overflow-y-auto px-2 py-3 space-y-0.5 overflow-x-hidden">
         {/* Section Labels */}
-        <div className={cn("px-2 pt-3 pb-1", !isMobile && "hidden lg:block")}>
-          <span className="text-label uppercase tracking-wider text-sidebar-foreground/40">Workspace</span>
+        <div className={cn("px-3 pt-4 pb-2", !isMobile && "hidden lg:block")}>
+          <span className="text-[11px] font-bold tracking-[0.15em] text-sidebar-foreground/50 uppercase">Workspace</span>
         </div>
 
         {visibleNavItems.slice(0, 3).map((item) => {
@@ -143,14 +143,12 @@ export function Sidebar({
               onClick={onNavClick}
               className={cn(
                 isActive
-                  // SKILL §6.2 — active nav item EXACT CLASS STRING
-                  ? "flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm bg-primary/10 text-white font-medium border-l-[2.5px] border-primary pl-[10px] shadow-[inset_0_0_0_0.5px_rgba(254,105,0,0.12)] transition-all duration-150"
-                  // SKILL §6.2 — inactive nav item EXACT CLASS STRING
-                  : "flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-white active:scale-[0.98] transition-all duration-150",
+                  ? "relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-[14px] bg-brand-orange/15 text-brand-orange font-semibold shadow-sm transition-all duration-200 before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-1 before:h-[60%] before:bg-brand-orange before:rounded-r-full"
+                  : "group flex items-center gap-3 px-3 py-2.5 rounded-xl text-[14px] text-sidebar-foreground hover:bg-white/5 hover:text-white active:scale-[0.98] transition-all duration-200",
                 !isMobile && "justify-center lg:justify-start"
               )}
             >
-              <item.icon className="w-4 h-4 flex-shrink-0" />
+              <item.icon className={cn("w-5 h-5 flex-shrink-0 transition-transform duration-300 group-hover:scale-110", isActive && "text-brand-orange")} />
               <span className={cn("truncate", !isMobile && "hidden lg:inline")}>{item.label}</span>
             </Link>
           )
@@ -162,12 +160,12 @@ export function Sidebar({
             onClick={() => setReportsOpen((o) => !o)}
             className={cn(
               isReportsActive
-                ? "w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm bg-primary/10 text-white font-medium border-l-[2.5px] border-primary pl-[10px] shadow-[inset_0_0_0_0.5px_rgba(254,105,0,0.12)] transition-all duration-150"
-                : "w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-white active:scale-[0.98] transition-all duration-150",
+                ? "relative w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[14px] bg-brand-orange/15 text-brand-orange font-semibold shadow-sm transition-all duration-200 before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-1 before:h-[60%] before:bg-brand-orange before:rounded-r-full"
+                : "group w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[14px] text-sidebar-foreground hover:bg-white/5 hover:text-white active:scale-[0.98] transition-all duration-200",
               !isMobile && "justify-center lg:justify-start"
             )}
           >
-            <TrendingUp className="w-4 h-4 flex-shrink-0" />
+            <TrendingUp className={cn("w-5 h-5 flex-shrink-0 transition-transform duration-300 group-hover:scale-110", isReportsActive && "text-brand-orange")} />
             <span className={cn("flex-1 text-left truncate", !isMobile && "hidden lg:inline")}>Reports</span>
             <ChevronRight
               className={cn(
@@ -198,12 +196,12 @@ export function Sidebar({
                       onClick={onNavClick}
                       className={cn(
                         isActive
-                          ? "flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm bg-primary/10 text-white font-medium border-l-[2.5px] border-primary pl-[10px] shadow-[inset_0_0_0_0.5px_rgba(254,105,0,0.12)] transition-all duration-150"
-                          : "flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-white active:scale-[0.98] transition-all duration-150",
+                          ? "relative flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] bg-brand-orange/15 text-brand-orange font-semibold transition-all duration-200 before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-[3px] before:h-1/2 before:bg-brand-orange before:rounded-r-full"
+                          : "group flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] text-sidebar-foreground hover:bg-white/5 hover:text-white active:scale-[0.98] transition-all duration-200",
                         isMobile ? "pl-5" : "justify-center lg:justify-start lg:pl-5"
                       )}
                     >
-                      <sub.icon className={cn("w-4 h-4 flex-shrink-0", !isMobile && "hidden lg:inline")} />
+                      <sub.icon className={cn("w-[18px] h-[18px] flex-shrink-0 transition-transform duration-300 group-hover:scale-110", !isMobile && "hidden lg:inline", isActive && "text-brand-orange")} />
                       <span className={cn("truncate", !isMobile && "hidden lg:inline")}>{sub.label}</span>
                     </Link>
                   )
@@ -214,8 +212,8 @@ export function Sidebar({
         </div>
 
         {/* Approvals + Settings */}
-        <div className={cn("px-2 pt-3 pb-1 mt-2", !isMobile && "hidden lg:block")}>
-          <span className="text-label uppercase tracking-wider text-sidebar-foreground/40">Settings</span>
+        <div className={cn("px-3 pt-5 pb-2 mt-2", !isMobile && "hidden lg:block")}>
+          <span className="text-[11px] font-bold tracking-[0.15em] text-sidebar-foreground/50 uppercase">Settings</span>
         </div>
         {visibleNavItems.slice(3).map((item) => {
           const isActive = pathname.startsWith(item.href)
@@ -226,12 +224,12 @@ export function Sidebar({
               onClick={onNavClick}
               className={cn(
                 isActive
-                  ? "flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm bg-primary/10 text-white font-medium border-l-[2.5px] border-primary pl-[10px] shadow-[inset_0_0_0_0.5px_rgba(254,105,0,0.12)] transition-all duration-150"
-                  : "flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-white active:scale-[0.98] transition-all duration-150",
+                  ? "relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-[14px] bg-brand-orange/15 text-brand-orange font-semibold shadow-sm transition-all duration-200 before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-1 before:h-[60%] before:bg-brand-orange before:rounded-r-full"
+                  : "group flex items-center gap-3 px-3 py-2.5 rounded-xl text-[14px] text-sidebar-foreground hover:bg-white/5 hover:text-white active:scale-[0.98] transition-all duration-200",
                 !isMobile && "justify-center lg:justify-start"
               )}
             >
-              <item.icon className="w-4 h-4 flex-shrink-0" />
+              <item.icon className={cn("w-5 h-5 flex-shrink-0 transition-transform duration-300 group-hover:scale-110", isActive && "text-brand-orange")} />
               <span className={cn("truncate", !isMobile && "hidden lg:inline")}>{item.label}</span>
             </Link>
           )
@@ -246,11 +244,11 @@ export function Sidebar({
             href="/superadmin"
             onClick={onNavClick}
             className={cn(
-              "flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-white transition-all duration-150",
+              "group flex items-center gap-3 px-3 py-2.5 rounded-xl text-[14px] text-sidebar-foreground hover:bg-white/5 hover:text-white active:scale-[0.98] transition-all duration-200",
               !isMobile && "justify-center lg:justify-start"
             )}
           >
-            <Crown className="w-4 h-4 flex-shrink-0 text-primary" />
+            <Crown className="w-5 h-5 flex-shrink-0 text-brand-orange transition-transform duration-300 group-hover:scale-110" />
             <span className={cn("flex-1 truncate", !isMobile && "hidden lg:inline")}>Super Admin</span>
             <span className={cn("ml-auto text-[9px] bg-orange-950/60 text-primary border border-primary/30 px-1.5 py-0.5 rounded font-bold", !isMobile && "hidden lg:inline")}>
               SA
@@ -270,22 +268,22 @@ export function Sidebar({
             {initials}
           </AvatarFallback>
         </Avatar>
-        <div className={cn("flex-1 min-w-0", !isMobile && "hidden lg:block")}>
-          <p className="text-caption text-sidebar-foreground/60 truncate">{userName}</p>
+        <div className={cn("flex flex-col min-w-0 transition-all", !isMobile && "hidden lg:flex")}>
+          <span className="text-[14px] font-semibold text-sidebar-foreground truncate leading-tight group-hover:text-white transition-colors cursor-default">{userName || userEmail.split('@')[0]}</span>
+          <span className="text-[11px] text-sidebar-foreground/60 uppercase tracking-wider">{userRole}</span>
         </div>
-        <div className={cn("flex items-center gap-1", !isMobile && "hidden lg:flex")}>
-          <ThemeToggle className="h-7 w-7 text-sidebar-foreground hover:text-foreground hover:bg-sidebar-accent" />
+        <div className={cn("flex items-center gap-1.5 ml-auto", !isMobile && "hidden lg:flex")}>
+          <div className="hover:bg-white/10 p-1.5 rounded-lg transition-colors cursor-pointer text-sidebar-foreground hover:text-white group" onClick={(e) => { e.preventDefault() }}>
+            <ThemeToggle className="h-4 w-4" />
+          </div>
           {onLogout && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 text-sidebar-foreground/40 hover:text-destructive hover:bg-sidebar-accent transition-colors"
+            <button
               onClick={onLogout}
-              aria-label="Log out"
+              className="p-1.5 rounded-lg text-sidebar-foreground hover:bg-white/10 hover:text-white transition-colors group"
               title="Log out"
             >
-              <LogOut className="w-4 h-4" />
-            </Button>
+              <LogOut className="w-[18px] h-[18px] transition-transform duration-300 group-hover:scale-110 text-brand-orange/80 group-hover:text-brand-orange" />
+            </button>
           )}
         </div>
       </div>

@@ -76,7 +76,7 @@ function SignupContent() {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit((data) => signup.mutate(data))} className="space-y-4">
+      <form onSubmit={handleSubmit((data) => signup.mutate({ ...data, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone }))} className="space-y-4">
         <div className="space-y-1.5">
           <Label htmlFor="signup-name">Full name</Label>
           <Input

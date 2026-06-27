@@ -27,6 +27,7 @@ export function useMarkNotificationRead() {
     mutationFn: (ids: string[]) => notificationsApi.markRead(ids),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: notificationKeys.all })
+      queryClient.invalidateQueries({ queryKey: ['attendance'] })
     },
   })
 }
@@ -38,6 +39,7 @@ export function useMarkAllNotificationsRead() {
     mutationFn: (workspaceId: string) => notificationsApi.markAllRead(workspaceId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: notificationKeys.all })
+      queryClient.invalidateQueries({ queryKey: ['attendance'] })
     },
   })
 }

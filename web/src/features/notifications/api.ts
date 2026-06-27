@@ -6,9 +6,8 @@ export interface Notification {
   title: string
   message: string
   event_type: string
-  is_read: boolean
   read_at: string | null
-  metadata: Record<string, any>
+  event_metadata: Record<string, any> | null
   created_at: string
 }
 

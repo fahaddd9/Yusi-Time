@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useCreateTask, useUpdateTask, useProject, useProjectMembers } from "@/features/projects/hooks"
-import { useWorkspaceMembers } from "@/features/settings/hooks"
+import { useWorkspaceMembers, useWorkspace } from "@/features/settings/hooks"
 import { useWorkspaceStore } from "@/stores/workspace-store"
 import { toast } from "sonner"
 import { useEffect, useMemo } from "react"
@@ -35,8 +35,11 @@ export function CreateTaskDialog({ projectId, open, onOpenChange, initialData }:
   const updateTask = useUpdateTask()
   const isEditing = !!initialData
   const { activeWorkspaceId } = useWorkspaceStore()
+  const { data: workspace } = useWorkspace(activeWorkspaceId ?? '')
   const { data: membersData } = useWorkspaceMembers(activeWorkspaceId ?? '')
   const members = membersData?.items || []
+  
+  const isWorkspaceBillable = workspace?.is_billable ?? true
   
   const { data: project } = useProject(projectId)
   const { data: projectMembersData } = useProjectMembers(projectId)
@@ -84,12 +87,19 @@ export function CreateTaskDialog({ projectId, open, onOpenChange, initialData }:
   }, [open, initialData, reset])
 
   const onSubmit = (data: FormValues) => {
+    let rate = data.hourly_rate_cents || null;
+    let override = data.billable_override;
+    if (!isWorkspaceBillable && isEditing) {
+      rate = initialData.hourly_rate_cents;
+      override = initialData.billable_override;
+    }
+
     const payload = {
       name: data.name,
       assignee_user_id: data.assignee_user_id || null,
       estimated_hours: data.estimated_hours ? parseFloat(data.estimated_hours) : null,
-      billable_override: data.billable_override,
-      hourly_rate_cents: data.hourly_rate_cents || null,
+      billable_override: override,
+      hourly_rate_cents: rate,
     }
 
     if (isEditing) {
@@ -164,14 +174,18 @@ export function CreateTaskDialog({ projectId, open, onOpenChange, initialData }:
             </div>
             
             <div className="space-y-2">
-              <Label>Billable Override</Label>
+              <Label className={!isWorkspaceBillable ? "text-muted-foreground" : ""}>Billable Override</Label>
               <Controller
                 name="billable_override"
                 control={control}
                 render={({ field }) => (
-                  <Select value={field.value === true ? "true" : field.value === false ? "false" : "null"} onValueChange={(val) => field.onChange(val === "null" ? null : val === "true")}>
+                  <Select 
+                    value={!isWorkspaceBillable ? "false" : field.value === true ? "true" : field.value === false ? "false" : "null"} 
+                    onValueChange={(val) => field.onChange(val === "null" ? null : val === "true")}
+                    disabled={!isWorkspaceBillable}
+                  >
                     <SelectTrigger>
-                      <SelectValue />
+                      <SelectValue placeholder={!isWorkspaceBillable ? "Not billable" : ""} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="null">Inherit from Project</SelectItem>
@@ -190,7 +204,8 @@ export function CreateTaskDialog({ projectId, open, onOpenChange, initialData }:
               id="hourly_rate" 
               type="number" 
               step="0.01" 
-              placeholder="Leave empty to use project default"
+              placeholder={!isWorkspaceBillable ? "Not billable" : "Leave empty to use project default"}
+              disabled={!isWorkspaceBillable}
               {...register("hourly_rate_cents", {
                 setValueAs: (v) => v === "" ? null : Math.round(parseFloat(v) * 100)
               })} 

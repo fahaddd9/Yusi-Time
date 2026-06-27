@@ -113,7 +113,13 @@ const config = {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    require("tailwindcss-animate"),
+    function ({ addVariant }: { addVariant: any }) {
+      addVariant("data-open", "&[data-open]")
+      addVariant("data-closed", "&[data-closed]")
+    }
+  ],
 } satisfies Config
 
 export default config

@@ -31,7 +31,7 @@ export function useLogin(setError?: UseFormSetError<{ email: string; password: s
 
 // ── useSignup ──────────────────────────────────────────────────────────────
 
-export function useSignup(setError?: UseFormSetError<{ email: string; password: string; full_name: string }>, redirectUrl?: string | null) {
+export function useSignup(setError?: UseFormSetError<{ email: string; password: string; full_name: string; timezone?: string }>, redirectUrl?: string | null) {
   const router = useRouter()
   return useMutation({
     mutationFn: authApi.signup,

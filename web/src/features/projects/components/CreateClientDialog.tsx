@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useCreateClient, useUpdateClient } from "@/features/projects/hooks"
+import { useWorkspace } from "@/features/settings/hooks"
+import { useWorkspaceStore } from "@/stores/workspace-store"
 import { toast } from "sonner"
 import { useEffect } from "react"
 
@@ -28,8 +30,13 @@ interface Props {
 }
 
 export function CreateClientDialog({ open, onOpenChange, initialData }: Props) {
+  const { activeWorkspaceId } = useWorkspaceStore()
+  const { data: workspace } = useWorkspace(activeWorkspaceId ?? '')
   const createClient = useCreateClient()
   const updateClient = useUpdateClient()
+  const isEdit = !!initialData
+  
+  const isWorkspaceBillable = workspace?.is_billable ?? true
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -62,15 +69,19 @@ export function CreateClientDialog({ open, onOpenChange, initialData }: Props) {
     }
   }, [initialData, reset])
 
-  const isEdit = !!initialData
 
   const onSubmit = (data: FormValues) => {
+    let rate = data.hourly_rate_cents || null;
+    if (!isWorkspaceBillable && isEdit) {
+      rate = initialData.hourly_rate_cents;
+    }
+
     const payload = {
       ...data,
       email: data.email || null,
       phone: data.phone || null,
       address: data.address || null,
-      hourly_rate_cents: data.hourly_rate_cents || null,
+      hourly_rate_cents: rate,
     }
 
     if (isEdit) {
@@ -141,6 +152,8 @@ export function CreateClientDialog({ open, onOpenChange, initialData }: Props) {
               id="hourly_rate" 
               type="number" 
               step="0.01" 
+              placeholder={!isWorkspaceBillable ? "Not billable" : "e.g. 100.00"}
+              disabled={!isWorkspaceBillable}
               {...register("hourly_rate_cents", {
                 setValueAs: (v) => v === "" || v == null ? null : Math.round(parseFloat(v) * 100)
               })} 

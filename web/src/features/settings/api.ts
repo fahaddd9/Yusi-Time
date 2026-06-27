@@ -38,6 +38,15 @@ export interface WorkspaceDetail {
   approval_workflow_enabled: boolean
   idle_detection_enabled: boolean
   idle_timeout_minutes: number | null
+  // Phase 6.5 — Attendance & Billable settings (Addendum §2.1, §2.4)
+  attendance_enabled: boolean
+  attendance_mode: 'fixed_schedule' | 'flexible_hours'
+  /** "HH:MM:SS" string from TIME column, or null */
+  work_start_time: string | null
+  daily_required_hours: number | null
+  /** 0=Sunday … 6=Saturday */
+  off_days: number[]
+  is_billable: boolean
   deleted_at: string | null
   created_at: string
   updated_at: string
