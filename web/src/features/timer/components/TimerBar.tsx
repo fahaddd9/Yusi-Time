@@ -202,6 +202,17 @@ export function TimerBar() {
     await doStartTimer(false)
   }, [selectedProjectId, currentEntry, doStartTimer])
 
+  const doStopTimer = useCallback(async () => {
+    if (!currentEntry) return
+    await stopTimer.mutateAsync({
+      entryId: currentEntry.id,
+      payload: {},
+    })
+    clearDraft()
+    setDescription('')
+    setShowStopGuard(false)
+  }, [currentEntry, stopTimer, clearDraft])
+
   const handleStop = useCallback(async () => {
     if (!currentEntry) return
 
@@ -220,17 +231,6 @@ export function TimerBar() {
     }
     await doStopTimer()
   }, [currentEntry, isMember, attendanceEnabled, dailyProgress, doStopTimer, elapsed])
-
-  const doStopTimer = useCallback(async () => {
-    if (!currentEntry) return
-    await stopTimer.mutateAsync({
-      entryId: currentEntry.id,
-      payload: {},
-    })
-    clearDraft()
-    setDescription('')
-    setShowStopGuard(false)
-  }, [currentEntry, stopTimer, clearDraft])
 
   const isRunning = !!currentEntry
   const isCurrentProjectRunning = isRunning && currentEntry.project_id === selectedProjectId
