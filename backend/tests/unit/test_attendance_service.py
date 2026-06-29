@@ -78,6 +78,15 @@ def make_db():
             return S(self._items)
 
     db.execute = AsyncMock(return_value=MockResult([]))
+    
+    async def mock_scalars(stmt):
+        stmt_str = str(stmt).lower()
+        if "workspace_members" in stmt_str or "workspacemember" in stmt_str:
+            return [make_member("admin")]
+        return []
+
+    db.scalars = AsyncMock(side_effect=mock_scalars)
+    
     return db
 
 
