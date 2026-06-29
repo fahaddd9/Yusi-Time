@@ -438,8 +438,10 @@ class TestRecordWorkStartResponse:
             )
 
         assert result["acknowledged"] is True
-        # Service doesn't create timer — router does; DB.add not called
-        db.add.assert_not_called()
+        # Service creates dummy notification so cron skips it
+        db.add.assert_called_once()
+        added = db.add.call_args[0][0]
+        assert added.notification_type == "work_start_missed"
 
 
 # ── Settings update tests ──────────────────────────────────────────────────────
