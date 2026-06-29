@@ -1,6 +1,6 @@
 # Yusi Time — Project State
-**Last Updated:** 2026-06-21 — Phase 6.5 Step 6.5.1 In Progress
-**Current Phase:** Phase 6.5 — Attendance, Hours Target, Billable Toggle & Idle Detection — 🔄 In Progress
+**Last Updated:** 2026-06-29 — Phase 6.5 Completed
+**Current Phase:** Phase 7 — Reports & Analytics — ⬜ Not Started
 **Last Session Summary:** Phase 6 (Approvals & Notifications) fully implemented and verified. Frontend React Query hooks built for querying notifications and approving timesheets. Notification Bell badges properly display unread counts with framer motion spring animations. Approval workflow features including Quick Approve and Quick Reject UI are fully functional. Ready to initialize Phase 7.
 
 ---
@@ -17,7 +17,7 @@
 | 4 | Time Tracking Core | ✅ Completed | 2026-06-18 |
 | 5 | Continue, Duplicate & Draft | ✅ Completed | 2026-06-18 |
 | 6 | Approvals & Notifications | ✅ Completed | 2026-06-21 |
-| 6.5 | Attendance, Hours Target, Billable Toggle & Idle Detection | 🔄 In Progress | — |
+| 6.5 | Attendance, Hours Target, Billable Toggle & Idle Detection | ✅ Completed | 2026-06-27 |
 | 7 | Reports & Analytics | ⬜ Not Started | — |
 | 7.5 | Super Admin UI Dashboard | ⬜ Not Started | — |
 | 8 | Webhooks, Polish & Deploy | ⬜ Not Started | — |
@@ -28,7 +28,7 @@
 
 ## Current Phase Detail
 
-### Phase 6.5 — Attendance, Hours Target, Billable Toggle & Idle Detection — 🔄 In Progress
+### Phase 6.5 — Attendance, Hours Target, Billable Toggle & Idle Detection — ✅ Completed
 
 #### Steps Completed
 - [x] Step 6.5.1 — Backend Models & Alembic Migration
