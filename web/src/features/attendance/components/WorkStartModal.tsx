@@ -330,7 +330,7 @@ export function WorkStartModal() {
 
         {/* Footer note — no re-prompt guarantee */}
         <p className="text-xs text-muted-foreground text-center mt-1">
-          Choosing "Not Now" won't show this prompt again today.
+          Choosing &quot;Not Now&quot; won&apos;t show this prompt again today.
         </p>
       </DialogContent>
     </Dialog>

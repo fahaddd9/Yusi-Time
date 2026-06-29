@@ -637,7 +637,6 @@ async def mark_read(
     Mark specific attendance notifications as read.
     """
     from sqlalchemy import update
-    from datetime import datetime, UTC
     
     if not notification_ids:
         return
@@ -663,7 +662,6 @@ async def mark_all_read(
     Mark all unread attendance notifications as read for a specific user in a workspace.
     """
     from sqlalchemy import update
-    from datetime import datetime, UTC
     
     stmt = (
         update(AttendanceNotification)

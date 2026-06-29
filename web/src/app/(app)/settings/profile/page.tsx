@@ -125,6 +125,7 @@ export default function ProfileSettingsPage() {
               <div className="flex flex-col sm:flex-row gap-4 sm:items-center">
                 <div className="w-16 h-16 rounded-full overflow-hidden bg-muted flex items-center justify-center border border-border flex-shrink-0">
                   {avatarUrl ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
                     <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
                   ) : (
                     <User2 className="w-8 h-8 text-muted-foreground/50" />

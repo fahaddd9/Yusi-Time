@@ -197,7 +197,6 @@ export function NotificationBell() {
   const { mutate: markAllRead } = useMarkAllNotificationsRead()
   const { mutate: markRead } = useMarkNotificationRead()
 
-  const regularNotifications = response?.data || []
   const regularUnread = response?.unread_count || 0
 
   // Attendance notifications are always scoped to 'self' for the personal Bell.
@@ -207,11 +206,12 @@ export function NotificationBell() {
     { workspace_id: workspaceId, scope: attScope, per_page: 20 },
     attendanceEnabled
   )
-  const attNotifications = attResponse?.data ?? []
   const attUnread = attResponse?.unread_count ?? 0
-
-  // Merge + sort DESC by created_at
+  
   const unified = useMemo<UnifiedItem[]>(() => {
+    const regularNotifications = response?.data || []
+    const attNotifications = attResponse?.data ?? []
+
     const regularItems: UnifiedItem[] = regularNotifications.map((n) => ({
       id: `reg-${n.id}`,
       source: 'regular' as const,
@@ -229,7 +229,7 @@ export function NotificationBell() {
     return [...regularItems, ...attItems].sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     )
-  }, [regularNotifications, attNotifications])
+  }, [response?.data, attResponse?.data])
 
   const totalUnread = regularUnread + attUnread
 

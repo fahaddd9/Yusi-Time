@@ -191,7 +191,7 @@ export function TimerBar() {
     })
     clearDraft()
     setShowSwitchDialog(false)
-  }, [selectedProjectId, selectedTaskId, description, billable, selectedTagIds, startTimer, clearDraft, idleEnabled])
+  }, [selectedProjectId, selectedTaskId, description, billable, selectedTagIds, startTimer, clearDraft])
 
   const handleStart = useCallback(async () => {
     if (!selectedProjectId) return
@@ -219,7 +219,7 @@ export function TimerBar() {
       return
     }
     await doStopTimer()
-  }, [currentEntry, isMember, attendanceEnabled, dailyProgress])
+  }, [currentEntry, isMember, attendanceEnabled, dailyProgress, doStopTimer, elapsed])
 
   const doStopTimer = useCallback(async () => {
     if (!currentEntry) return
@@ -534,7 +534,7 @@ export function TimerBar() {
             <AlertDialogHeader>
               <AlertDialogTitle>Stop tracking early?</AlertDialogTitle>
               <AlertDialogDescription>
-                You've logged{' '}
+                You&apos;ve logged{` `}
                 <span className="font-semibold font-mono">{((dailyProgress?.hours_logged_today ?? 0) + (elapsed / 3600)).toFixed(1)}h</span>{' '}
                 of your{' '}
                 <span className="font-semibold font-mono">{dailyProgress.daily_required_hours}h</span>{' '}

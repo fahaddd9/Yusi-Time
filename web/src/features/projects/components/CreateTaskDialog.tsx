@@ -37,7 +37,7 @@ export function CreateTaskDialog({ projectId, open, onOpenChange, initialData }:
   const { activeWorkspaceId } = useWorkspaceStore()
   const { data: workspace } = useWorkspace(activeWorkspaceId ?? '')
   const { data: membersData } = useWorkspaceMembers(activeWorkspaceId ?? '')
-  const members = membersData?.items || []
+  const members = useMemo(() => membersData?.items || [], [membersData?.items])
   
   const isWorkspaceBillable = workspace?.is_billable ?? true
   
