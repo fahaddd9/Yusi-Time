@@ -1,0 +1,19 @@
+User test@example.com has 0 notifs
+User test2@gmail.com has 2 notifs
+ - work_start_missed on 2026-06-25 (read=False, late=None)
+ - flexible_reminder_missed on 2026-06-25 (read=False, late=None)
+User superadmin@yusitime.com has 0 notifs
+User test3@gmail.com has 0 notifs
+User alice@gmail.com has 0 notifs
+User bob@email.com has 9 notifs
+ - flexible_reminder_missed on 2026-06-24 (read=False, late=None)
+ - work_start_missed on 2026-06-25 (read=False, late=None)
+ - flexible_reminder_missed on 2026-06-25 (read=True, late=None)
+ - flexible_reminder_missed on 2026-06-25 (read=True, late=None)
+ - flexible_reminder_missed on 2026-06-25 (read=True, late=None)
+ - flexible_reminder_missed on 2026-06-25 (read=True, late=None)
+ - flexible_reminder_missed on 2026-06-25 (read=True, late=None)
+ - flexible_reminder_missed on 2026-06-25 (read=True, late=None)
+ - flexible_reminder_missed on 2026-06-25 (read=True, late=None)
+User admin@gmail.com has 0 notifs
+User thefadi384@gmail.com has 0 notifs

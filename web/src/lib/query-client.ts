@@ -15,9 +15,9 @@ export function getQueryClient(): QueryClient {
     queryClientInstance = new QueryClient({
       defaultOptions: {
         queries: {
-          staleTime: 60 * 1000, // 1 minute default stale time
+          staleTime: 30 * 1000, // 30 seconds — short enough to pick up mutations quickly
           retry: 1,
-          refetchOnWindowFocus: false,
+          refetchOnWindowFocus: true, // Auto-refetch stale queries on tab/window focus
         },
       },
     })

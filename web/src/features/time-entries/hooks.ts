@@ -250,6 +250,9 @@ export function useDuplicateEntry() {
       showRoundingToast(response.data.rounding)
       qc.invalidateQueries({ queryKey: entryKeys.all(workspaceId) })
       qc.invalidateQueries({ queryKey: ['time-entries', workspaceId, 'list'] })
+      // DR-30: also invalidate reports so the new entry appears immediately in the Detailed Report
+      qc.invalidateQueries({ queryKey: ['reports'] })
+      toast.success('Entry duplicated')
     },
     onError: (err: any) => {
       toast.error(err?.response?.data?.detail ?? 'Failed to duplicate entry')

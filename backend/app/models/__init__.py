@@ -29,6 +29,9 @@ from app.models.submission_entry import SubmissionEntry
 from app.models.attendance_notification import AttendanceNotification
 from app.models.push_subscription import PushSubscription
 
+# Phase 7 Models — DB Schema §4.15 + v2.1 §5
+from app.models.saved_report_view import SavedReportView
+
 __all__ = [
     "User",
     "PasswordResetToken",
@@ -48,4 +51,5 @@ __all__ = [
     "SubmissionEntry",
     "AttendanceNotification",
     "PushSubscription",
+    "SavedReportView",
 ]

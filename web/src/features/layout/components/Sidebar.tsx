@@ -39,14 +39,9 @@ const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'manager', 'member', 'viewer'] },
   { href: '/timesheet', label: 'Timesheet', icon: CalendarClock, roles: ['admin', 'manager', 'member', 'viewer'] },
   { href: '/projects', label: 'Projects', icon: FolderOpen, roles: ['admin', 'manager', 'member', 'viewer'] },
+  { href: '/reports/summary', match: '/reports', label: 'Reports', icon: TrendingUp, roles: ['admin', 'manager', 'member', 'viewer'] },
   { href: '/approvals', label: 'Approvals', icon: CheckSquare, roles: ['admin', 'manager'] }, // PRD §4: Approvals absent for member/viewer
   { href: '/settings', label: 'Settings', icon: Settings, roles: ['admin', 'manager', 'member', 'viewer'] },
-]
-
-const reportSubItems = [
-  { href: '/reports/summary', label: 'Summary', icon: BarChart3 },
-  { href: '/reports/detailed', label: 'Detailed', icon: FileText },
-  { href: '/reports/weekly', label: 'Weekly', icon: Calendar },
 ]
 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
@@ -66,10 +61,8 @@ export function Sidebar({
   onNavClick
 }: SidebarProps & { workspaces?: any[], activeWorkspaceId?: string, onWorkspaceChange?: (id: string) => void }) {
   const pathname = usePathname()
-  const [reportsOpen, setReportsOpen] = useState(pathname.startsWith('/reports'))
 
   const visibleNavItems = navItems.filter((item) => item.roles.includes(userRole))
-  const isReportsActive = pathname.startsWith('/reports')
 
   const initials = userName
     .split(' ')
@@ -128,14 +121,16 @@ export function Sidebar({
         )}
       </div>
 
-      <nav className="flex-1 overflow-y-auto px-2 py-3 space-y-0.5 overflow-x-hidden">
+      <nav className="flex-1 overflow-y-auto px-2 py-3 space-y-0.5 overflow-x-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {/* Section Labels */}
         <div className={cn("px-3 pt-4 pb-2", !isMobile && "hidden lg:block")}>
           <span className="text-[11px] font-bold tracking-[0.15em] text-sidebar-foreground/50 uppercase">Workspace</span>
         </div>
 
-        {visibleNavItems.slice(0, 3).map((item) => {
-          const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))
+        {visibleNavItems.slice(0, 4).map((item) => {
+          const isActive = item.match 
+            ? pathname.startsWith(item.match) 
+            : (item.href === '/dashboard' ? pathname === item.href : pathname.startsWith(item.href))
           return (
             <Link
               key={item.href}
@@ -154,69 +149,14 @@ export function Sidebar({
           )
         })}
 
-        {/* Reports sub-navigation */}
-        <div>
-          <button
-            onClick={() => setReportsOpen((o) => !o)}
-            className={cn(
-              isReportsActive
-                ? "relative w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[14px] bg-brand-orange/15 text-brand-orange font-semibold shadow-sm transition-all duration-200 before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-1 before:h-[60%] before:bg-brand-orange before:rounded-r-full"
-                : "group w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[14px] text-sidebar-foreground hover:bg-white/5 hover:text-white active:scale-[0.98] transition-all duration-200",
-              !isMobile && "justify-center lg:justify-start"
-            )}
-          >
-            <TrendingUp className={cn("w-5 h-5 flex-shrink-0 transition-transform duration-300 group-hover:scale-110", isReportsActive && "text-brand-orange")} />
-            <span className={cn("flex-1 text-left truncate", !isMobile && "hidden lg:inline")}>Reports</span>
-            <ChevronRight
-              className={cn(
-                'w-4 h-4 transition-transform duration-200 flex-shrink-0',
-                reportsOpen ? 'rotate-90' : '',
-                !isMobile && "hidden lg:inline"
-              )}
-            />
-          </button>
-
-          <div
-            className={cn(
-              "grid transition-all duration-200 ease-in-out",
-              reportsOpen ? "grid-rows-[1fr] opacity-100 mt-0.5" : "grid-rows-[0fr] opacity-0"
-            )}
-          >
-            <div className="overflow-hidden">
-              <div className={cn(
-                "space-y-0.5",
-                isMobile ? "ml-[20px] pl-0 border-l border-sidebar-border" : "lg:ml-[20px] lg:pl-0 lg:border-l lg:border-sidebar-border mt-1"
-              )}>
-                {reportSubItems.map((sub) => {
-                  const isActive = pathname === sub.href
-                  return (
-                    <Link
-                      key={sub.href}
-                      href={sub.href}
-                      onClick={onNavClick}
-                      className={cn(
-                        isActive
-                          ? "relative flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] bg-brand-orange/15 text-brand-orange font-semibold transition-all duration-200 before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-[3px] before:h-1/2 before:bg-brand-orange before:rounded-r-full"
-                          : "group flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] text-sidebar-foreground hover:bg-white/5 hover:text-white active:scale-[0.98] transition-all duration-200",
-                        isMobile ? "pl-5" : "justify-center lg:justify-start lg:pl-5"
-                      )}
-                    >
-                      <sub.icon className={cn("w-[18px] h-[18px] flex-shrink-0 transition-transform duration-300 group-hover:scale-110", !isMobile && "hidden lg:inline", isActive && "text-brand-orange")} />
-                      <span className={cn("truncate", !isMobile && "hidden lg:inline")}>{sub.label}</span>
-                    </Link>
-                  )
-                })}
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* Approvals + Settings */}
         <div className={cn("px-3 pt-5 pb-2 mt-2", !isMobile && "hidden lg:block")}>
           <span className="text-[11px] font-bold tracking-[0.15em] text-sidebar-foreground/50 uppercase">Settings</span>
         </div>
-        {visibleNavItems.slice(3).map((item) => {
-          const isActive = pathname.startsWith(item.href)
+        {visibleNavItems.slice(4).map((item) => {
+          const isActive = item.match 
+            ? pathname.startsWith(item.match) 
+            : (item.href === '/dashboard' ? pathname === item.href : pathname.startsWith(item.href))
           return (
             <Link
               key={item.href}

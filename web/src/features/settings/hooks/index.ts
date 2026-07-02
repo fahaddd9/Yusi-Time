@@ -2,7 +2,7 @@
  * Settings hooks — React Query wrappers for workspace, member, and invite operations.
  *
  * All mutations invalidate relevant query keys on success.
- * Workspace queries use staleTime of 300s (5 minutes) per IMPLEMENTATION_PLAN §2.10.
+ * Workspace queries use short staleTime (30s) so settings/role changes propagate instantly.
  */
 'use client'
 
@@ -35,7 +35,7 @@ export function useWorkspaces() {
   return useQuery({
     queryKey: workspaceKeys.list(),
     queryFn: () => settingsApi.listWorkspaces().then((r) => r.data),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 1000,
   })
 }
 
@@ -43,7 +43,7 @@ export function useWorkspace(workspaceId: string | null) {
   return useQuery({
     queryKey: workspaceKeys.detail(workspaceId ?? ''),
     queryFn: () => settingsApi.getWorkspace(workspaceId!).then((r) => r.data),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 1000,
     enabled: !!workspaceId,
   })
 }
@@ -55,6 +55,11 @@ export function useUpdateWorkspace(workspaceId: string) {
     onSuccess: (response) => {
       queryClient.setQueryData(workspaceKeys.detail(workspaceId), response.data)
       queryClient.invalidateQueries({ queryKey: workspaceKeys.list() })
+      // Invalidate downstream consumers that depend on workspace settings
+      // (is_billable, currency, rounding_mode, attendance_enabled, etc.)
+      queryClient.invalidateQueries({ queryKey: ['reports'] })
+      queryClient.invalidateQueries({ queryKey: ['time-entries'] })
+      queryClient.invalidateQueries({ queryKey: ['attendance'] })
       toast.success('Workspace updated')
     },
     onError: () => {
@@ -83,7 +88,7 @@ export function useWorkspaceMembers(workspaceId: string, page = 1, perPage = 25)
   return useQuery({
     queryKey: [...workspaceKeys.members(workspaceId), page, perPage],
     queryFn: () => settingsApi.listMembers(workspaceId, page, perPage).then((r) => r.data),
-    staleTime: 2 * 60 * 1000,
+    staleTime: 30 * 1000,
     enabled: !!workspaceId,
   })
 }
@@ -95,6 +100,10 @@ export function useChangeRole(workspaceId: string) {
       settingsApi.changeRole(workspaceId, userId, newRole),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: workspaceKeys.members(workspaceId) })
+      // Workspace list includes role for the current user — must refresh
+      queryClient.invalidateQueries({ queryKey: workspaceKeys.list() })
+      queryClient.invalidateQueries({ queryKey: ['reports'] })
+      queryClient.invalidateQueries({ queryKey: ['time-entries'] })
       toast.success('Role updated')
     },
     onError: (error: any) => {
@@ -192,7 +201,7 @@ export function useMe() {
   return useQuery({
     queryKey: userKeys.me,
     queryFn: () => settingsApi.getMe().then((r) => r.data),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 60 * 1000,
   })
 }
 

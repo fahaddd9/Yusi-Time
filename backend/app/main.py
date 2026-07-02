@@ -17,6 +17,7 @@ from app.routers.notifications import router as notifications_router
 from app.routers.approvals import router as approvals_router
 from app.routers.push_subscriptions import router as push_subscriptions_router
 from app.routers.attendance import router as attendance_router
+from app.routers.reports import router as reports_router
 from app.services.scheduler_service import start_scheduler, stop_scheduler
 
 setup_logging()
@@ -68,6 +69,7 @@ app.include_router(time_entries_router, prefix="/api/v1")
 app.include_router(notifications_router, prefix="/api/v1")
 app.include_router(approvals_router, prefix="/api/v1")
 app.include_router(push_subscriptions_router, prefix="/api/v1")
+app.include_router(reports_router, prefix="/api/v1")
 
 
 @app.get("/health")
